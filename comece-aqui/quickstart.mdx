@@ -1,0 +1,316 @@
+---
+title: "Quickstart"
+sidebarTitle: "Quickstart (5 min)"
+description: "Configure seu ambiente e faça sua primeira chamada à API em 5 minutos"
+---
+
+## Visão geral
+
+Este guia vai te levar do zero à sua primeira chamada de API em poucos minutos. Ao final, você terá:
+
+1. Credenciais de acesso ao ambiente Sandbox
+2. Ambiente configurado para fazer requisições
+3. Uma chamada de teste funcionando
+
+<Note>
+Todos os exemplos usam o ambiente **Sandbox**. Para acesso à Produção, veja [Ambientes](/comece-aqui/ambientes).
+</Note>
+
+---
+
+## Passo 1: Obtenha suas credenciais
+
+As credenciais da API Conta Simples são gerenciadas diretamente pelo **Internet Banking da Conta Simples**. Tanto as credenciais de **Sandbox** quanto de **Produção** ficam disponíveis no mesmo lugar.
+
+<Steps>
+  <Step title="Acesse o painel de credenciais">
+    Acesse o Internet Banking e navegue até a seção de credenciais da API:
+
+    👉 [ib.contasimples.com/integracoes/api/credenciais](https://ib.contasimples.com/integracoes/api/credenciais)
+  </Step>
+  <Step title="Copie suas credenciais">
+    No painel, você encontrará duas credenciais para cada ambiente:
+    - **API Key** — identificador da sua aplicação
+    - **API Secret** — segredo para autenticação
+  </Step>
+  <Step title="Guarde com segurança">
+    Armazene as credenciais em um cofre de segredos (Vault, AWS Secrets Manager, etc.). **Nunca** comite em repositórios ou exponha em logs.
+  </Step>
+</Steps>
+
+<Info>
+**Não consegue ver as credenciais?** O acesso ao painel de credenciais depende do seu perfil de usuário e permissões no Internet Banking. Caso não consiga visualizar ou gerenciar as credenciais, solicite acesso ao responsável da sua empresa na Conta Simples.
+</Info>
+
+<Warning>
+Credenciais comprometidas devem ser revogadas imediatamente pelo painel do Internet Banking. Se necessário, entre em contato com o [suporte](/operacao/suporte).
+</Warning>
+
+---
+
+## Passo 2: Obtenha um token de acesso
+
+Com suas credenciais em mãos, autentique-se para obter um token de acesso.
+
+```bash
+curl -X POST https://api-sandbox.contasimples.com/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id={SUA_API_KEY}" \
+  -d "client_secret={SEU_API_SECRET}"
+```
+
+### Onde substituir
+
+| Placeholder | Descrição |
+|-------------|-----------|
+| `{SUA_API_KEY}` | API Key obtida no Internet Banking |
+| `{SEU_API_SECRET}` | API Secret obtido no Internet Banking |
+
+### Resposta esperada
+
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+O `access_token` é o que você usará em todas as chamadas subsequentes. Ele expira em `expires_in` segundos (geralmente 1 hora).
+
+<Tip>
+Implemente renovação automática de token antes da expiração para evitar erros `401` em fluxos longos.
+</Tip>
+
+---
+
+## Passo 3: Consulte o extrato de transações
+
+Agora que você tem um token válido, consulte o extrato de transações de cartão usando [POST /credit-card](/api-reference/extrato-cartao):
+
+```bash
+curl -X POST https://api-sandbox.contasimples.com/credit-card \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-31",
+    "limit": 10
+  }'
+```
+
+Substitua `{TOKEN}` pelo `access_token` obtido no Passo 2.
+
+### Parâmetros do body
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `startDate` | string | ✓ | Data inicial (`YYYY-MM-DD`). Ex: `2025-01-01` |
+| `endDate` | string | ✓ | Data final (`YYYY-MM-DD`). Ex: `2025-01-31` |
+| `limit` | integer | ✓ | Quantidade de resultados por página (5 a 100) |
+| `nextPageStartKey` | string | ✗ | Cursor para paginação (ver seção abaixo) |
+
+<Warning>
+O período máximo entre `startDate` e `endDate` é de **62 dias**.
+</Warning>
+
+### Resposta esperada
+
+```json
+{
+  "transactions": [
+    {
+      "id": "txn_8f7e6d5c4b3a2190",
+      "operation": "CASH_OUT",
+      "transactionDate": "2025-01-15T14:30:00.000Z",
+      "status": "PROCESSED",
+      "type": "PURCHASE",
+      "merchant": "UBER *TRIP",
+      "amountBrl": 45.90,
+      "exchangeRateUsd": 0,
+      "isCanceled": false,
+      "isConciled": true,
+      "installment": 1,
+      "card": {
+        "id": "card_a1b2c3d4e5f6",
+        "maskedNumber": "**** **** **** 1234",
+        "responsibleName": "João Silva",
+        "responsibleEmail": "joao.silva@empresa.com",
+        "type": "VIRTUAL"
+      },
+      "category": {
+        "id": "cat_transport",
+        "name": "Transporte"
+      },
+      "costCenter": {
+        "id": "cc_comercial",
+        "name": "Comercial"
+      },
+      "attachments": []
+    }
+  ],
+  "nextPageStartKey": "eyJsYXN0SWQiOiJ0eG5fOGY3ZTZkNWM0YjNhMjE5MCJ9"
+}
+```
+
+Se você recebeu uma resposta `200 OK` com transações, parabéns! Sua integração está funcionando.
+
+<CardGroup cols={2}>
+  <Card title="Ver endpoint completo" icon="code" href="/api-reference/extrato-cartao">
+    Documentação completa da API.
+  </Card>
+  <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+    Descrição de todos os campos.
+  </Card>
+</CardGroup>
+
+---
+
+## Paginação
+
+A API usa **paginação baseada em cursor** para lidar com grandes volumes de dados.
+
+### Como funciona
+
+1. Na primeira requisição, envie apenas `startDate`, `endDate` e `limit`
+2. Se houver mais resultados, a resposta incluirá `nextPageStartKey`
+3. Para obter a próxima página, envie o mesmo request incluindo `nextPageStartKey`
+4. Repita até `nextPageStartKey` ser `null` ou ausente
+
+### Exemplo: paginando resultados
+
+**Primeira requisição:**
+
+```bash
+curl -X POST https://api-sandbox.contasimples.com/credit-card \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-31",
+    "limit": 10
+  }'
+```
+
+**Resposta:**
+
+```json
+{
+  "transactions": [...],
+  "nextPageStartKey": "eyJsYXN0SWQiOiJ0eG5fYWJjMTIzIn0="
+}
+```
+
+**Segunda requisição (próxima página):**
+
+```bash
+curl -X POST https://api-sandbox.contasimples.com/credit-card \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-31",
+    "limit": 10,
+    "nextPageStartKey": "eyJsYXN0SWQiOiJ0eG5fYWJjMTIzIn0="
+  }'
+```
+
+**Última página (sem mais resultados):**
+
+```json
+{
+  "transactions": [...],
+  "nextPageStartKey": null
+}
+```
+
+<Note>
+O `nextPageStartKey` é um token opaco. Não tente decodificar ou modificar — use exatamente como recebido.
+</Note>
+
+---
+
+## Erros comuns do primeiro request
+
+Se sua primeira chamada falhar, verifique:
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized" icon="lock">
+    **Causa:** Token inválido, expirado ou ausente.
+    
+    **Verifique:**
+    - O header está como `Authorization: Bearer {TOKEN}` (com espaço após "Bearer")
+    - O token não expirou (`expires_in` segundos)
+    - Você está usando o token correto (não o `API Secret`)
+    
+    **Solução:** Obtenha um novo token via `/oauth/token`.
+  </Accordion>
+  
+  <Accordion title="400 Bad Request" icon="circle-xmark">
+    **Causa:** Parâmetros inválidos no body.
+    
+    **Verifique:**
+    - `startDate` e `endDate` estão no formato `YYYY-MM-DD`
+    - O período não excede 62 dias
+    - `limit` está entre 5 e 100
+    - O JSON está bem formado
+    
+    **Solução:** Corrija os parâmetros conforme a documentação.
+  </Accordion>
+  
+  <Accordion title="403 Forbidden" icon="ban">
+    **Causa:** Credenciais sem permissão para o recurso.
+    
+    **Verifique:**
+    - Você está usando credenciais do ambiente correto (Sandbox vs Produção)
+    - Suas credenciais têm os escopos necessários
+    
+    **Solução:** Entre em contato com o [suporte](/operacao/suporte) para verificar permissões.
+  </Accordion>
+  
+  <Accordion title="500 Internal Server Error" icon="server">
+    **Causa:** Erro interno no servidor.
+    
+    **Solução:** 
+    - Aguarde alguns segundos e tente novamente
+    - Se persistir, entre em contato com o [suporte](/operacao/suporte) informando o `request_id` (se disponível)
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Guia completo de erros" icon="triangle-exclamation" href="/operacao/erros-comuns">
+  Diagnóstico detalhado de todos os códigos de erro.
+</Card>
+
+---
+
+## Checklist de integração
+
+Use este checklist para garantir que sua integração está pronta:
+
+- ✅ Credenciais Sandbox obtidas no Internet Banking e armazenadas com segurança
+- ✅ Autenticação funcionando (token obtido com sucesso)
+- ✅ Primeira chamada ao extrato realizada
+- ✅ Paginação implementada (uso de `nextPageStartKey`)
+- ✅ Tratamento de erros implementado (401, 400, 500)
+- ✅ Lógica de retry com backoff exponencial
+- ✅ Logging de requests para troubleshooting
+
+---
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Fluxo de Integração" icon="route" href="/guias/fluxo-integracao">
+    Passo a passo completo do Sandbox à Produção.
+  </Card>
+  <Card title="Boas Práticas" icon="shield-check" href="/guias/boas-praticas">
+    Paginação, retry e tratamento de erros.
+  </Card>
+  <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+    Significado de todos os campos retornados.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao">
+    Referência técnica completa dos endpoints.
+  </Card>
+</CardGroup>

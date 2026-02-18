@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "API Conta Simples",
+    "description": "Collection oficial da API Conta Simples.\n\nGerada a partir do OpenAPI 3.0.3 spec (public-openapi.json).\n\nEndpoints disponíveis:\n- Autenticação (OAuth 2.0 Client Credentials)\n- Extrato de Cartão\n- Download de Anexo\n\nDocumentação completa: https://docs.contasimples.com",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "contasimples-api"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api-sandbox.contasimples.com",
+      "type": "string",
+      "description": "URL base da API. Sandbox: https://api-sandbox.contasimples.com | Produção: https://api.contasimples.com"
+    },
+    {
+      "key": "clientId",
+      "value": "",
+      "type": "string",
+      "description": "API Key obtida no Internet Banking da Conta Simples (https://ib.contasimples.com/integracoes/api/credenciais)."
+    },
+    {
+      "key": "clientSecret",
+      "value": "",
+      "type": "string",
+      "description": "API Secret obtido no Internet Banking da Conta Simples."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT obtido via POST /oauth/token. Preenchido automaticamente pelo script de autenticação."
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoint para obtenção de token de acesso via OAuth 2.0 Client Credentials.",
+      "item": [
+        {
+          "name": "Obter Token de Acesso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "description": "Tipo de concessão OAuth 2.0. Sempre client_credentials.",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "description": "API Key obtida no Internet Banking da Conta Simples.",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{clientSecret}}",
+                  "description": "API Secret obtido no Internet Banking da Conta Simples.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/oauth/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["oauth", "token"]
+            },
+            "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials.\n\nUse a API Key como client_id e o API Secret como client_secret.\n\nO token expira em 1 hora (expires_in: 3600). Renove antes da expiração para evitar interrupções."
+          },
+          "response": [
+            {
+              "name": "200 — Token gerado com sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-www-form-urlencoded"
+                  }
+                ],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "grant_type",
+                      "value": "client_credentials",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "{{clientId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_secret",
+                      "value": "{{clientSecret}}",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/oauth/token",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["oauth", "token"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"token\", jsonData.access_token);",
+                  "    console.log(\"Token salvo automaticamente na variável {{token}}\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cartões & Transações",
+      "description": "Endpoints para consulta de extratos e transações de cartão.",
+      "item": [
+        {
+          "name": "Extrato de Cartão",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2025-09-01\",\n  \"endDate\": \"2025-09-30\",\n  \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/credit-card",
+              "host": ["{{baseUrl}}"],
+              "path": ["credit-card"]
+            },
+            "description": "Consulta o extrato de transações de cartão por período.\n\nRegras:\n- O período entre startDate e endDate não pode exceder 62 dias.\n- O limit deve estar entre 5 e 100 itens por página.\n- Use nextPageStartKey para navegar entre páginas (paginação por cursor)."
+          },
+          "response": [
+            {
+              "name": "200 — Extrato retornado com sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"startDate\": \"2025-09-01\",\n  \"endDate\": \"2025-09-30\",\n  \"limit\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/credit-card",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["credit-card"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"transactions\": [\n    {\n      \"id\": \"txn-abc-123\",\n      \"operation\": \"CASH_OUT\",\n      \"transactionDate\": \"2025-09-15T14:30:00.000Z\",\n      \"status\": \"PROCESSED\",\n      \"isCanceled\": false,\n      \"type\": \"PURCHASE\",\n      \"merchant\": \"Restaurante Exemplo\",\n      \"amountBrl\": 150.75,\n      \"exchangeRateUsd\": 0,\n      \"card\": {\n        \"id\": \"card-001\",\n        \"maskedNumber\": \"**** **** **** 1234\",\n        \"responsibleName\": \"João Silva\",\n        \"responsibleEmail\": \"joao@empresa.com\",\n        \"type\": \"VIRTUAL\"\n      },\n      \"category\": {\n        \"id\": \"cat-001\",\n        \"name\": \"Alimentação\"\n      },\n      \"costCenter\": {\n        \"id\": \"cc-001\",\n        \"name\": \"Marketing\"\n      },\n      \"isConciled\": true,\n      \"installment\": 1,\n      \"attachments\": [\n        {\n          \"id\": \"att-001\",\n          \"name\": \"comprovante.pdf\",\n          \"_links\": {\n            \"content\": {\n              \"href\": \"/content/att-001\",\n              \"rel\": \"GET\"\n            }\n          }\n        }\n      ]\n    }\n  ],\n  \"nextPageStartKey\": \"eyJpZCI6InR4bi1hYmMtMTIzIn0=\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Anexos",
+      "description": "Endpoints para download de comprovantes e anexos de transações.",
+      "item": [
+        {
+          "name": "Download de Anexo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/:attachmentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", ":attachmentId"],
+              "variable": [
+                {
+                  "key": "attachmentId",
+                  "value": "",
+                  "description": "ID único do anexo, obtido no array attachments da resposta do extrato de cartão."
+                }
+              ]
+            },
+            "description": "Faz o download do conteúdo binário de um anexo vinculado a uma transação.\n\nOs IDs dos anexos são retornados no array attachments de cada transação no endpoint de extrato.\n\nFormatos suportados: PNG, JPEG, PDF."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

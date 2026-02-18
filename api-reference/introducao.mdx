@@ -1,0 +1,113 @@
+---
+title: "API Reference"
+sidebarTitle: "Introdução"
+description: "Referência técnica completa dos endpoints da API Conta Simples"
+---
+
+## Sobre esta seção
+
+A **API Reference** é a referência técnica dos endpoints da API Conta Simples. Aqui você encontra:
+
+- Todos os endpoints disponíveis com parâmetros e schemas
+- Exemplos de request e response
+- Códigos de resposta HTTP
+- Playground interativo para testar chamadas
+
+<Warning>
+**Novo por aqui?** Recomendamos começar pelos [Guides](/comece-aqui/quickstart) antes de explorar a referência técnica. Os guias explicam os **conceitos e fluxos** — esta seção foca nos **detalhes técnicos** de cada endpoint.
+</Warning>
+
+---
+
+## Como usar esta referência
+
+<Steps>
+  <Step title="Entenda o fluxo nos Guides">
+    Leia o [Fluxo de Integração Recomendado](/guias/fluxo-integracao) para entender a jornada completa.
+  </Step>
+  <Step title="Consulte o endpoint específico">
+    Use esta referência para ver parâmetros, tipos e exemplos de cada endpoint.
+  </Step>
+  <Step title="Teste no playground">
+    Use o playground interativo ao lado de cada endpoint para testar chamadas diretamente.
+  </Step>
+  <Step title="Consulte o Dicionário de Dados">
+    Para entender o significado de cada campo, consulte o [Dicionário de Dados](/referencia/dicionario-dados).
+  </Step>
+</Steps>
+
+---
+
+## Endpoints disponíveis
+
+<CardGroup cols={2}>
+  <Card title="POST /oauth/token" icon="key" href="/api-reference/autenticacao">
+    Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials para autenticar nas chamadas à API.
+  </Card>
+  <Card title="POST /credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
+    Consulta extrato de transações de cartão por período. Retorna transações com dados de cartão, categoria, centro de custo e anexos.
+  </Card>
+  <Card title="GET /content/{attachmentId}" icon="paperclip" href="/api-reference/download-anexo">
+    Download do conteúdo binário de um anexo (comprovante, nota fiscal, recibo) em PNG, JPEG ou PDF.
+  </Card>
+</CardGroup>
+
+---
+
+## Autenticação
+
+Todas as requisições requerem autenticação via **Bearer token** no header `Authorization`:
+
+```bash
+curl -X POST https://api-sandbox.contasimples.com/credit-card \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+| Header | Valor | Obrigatório |
+|--------|-------|-------------|
+| `Authorization` | `Bearer {TOKEN}` | ✓ |
+| `Content-Type` | `application/json` | ✓ (para POST) |
+
+<Card title="Guia de Autenticação" icon="key" href="/comece-aqui/autenticacao">
+  Como obter e renovar tokens de acesso.
+</Card>
+
+---
+
+## Convenções
+
+### Datas
+
+| Contexto | Formato | Exemplo |
+|----------|---------|---------|
+| Parâmetros de entrada | `YYYY-MM-DD` | `2025-01-15` |
+| Campos de resposta | ISO 8601 | `2025-01-15T14:30:00.000Z` |
+
+### Valores monetários
+
+Valores vêm como `number` (decimais) em **Reais (BRL)**.
+
+### Paginação
+
+Paginação baseada em cursor via `nextPageStartKey`. Veja [Boas Práticas → Paginação](/guias/boas-praticas#paginação) para implementação completa.
+
+---
+
+## Recursos complementares
+
+<CardGroup cols={2}>
+  <Card title="Fluxo de Integração" icon="route" href="/guias/fluxo-integracao">
+    Passo a passo recomendado para integrar.
+  </Card>
+  <Card title="Boas Práticas" icon="shield-check" href="/guias/boas-praticas">
+    Paginação, retry e tratamento de erros.
+  </Card>
+  <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+    Descrição detalhada de todas as entidades e campos.
+  </Card>
+  <Card title="Erros Comuns" icon="triangle-exclamation" href="/operacao/erros-comuns">
+    Diagnóstico e resolução de erros por endpoint.
+  </Card>
+</CardGroup>

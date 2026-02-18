@@ -1,0 +1,354 @@
+---
+title: "Boas Práticas"
+sidebarTitle: "Boas Práticas"
+description: "Padrões recomendados para paginação, tratamento de erros, retry e mais"
+---
+
+## Visão geral
+
+Este guia reúne as boas práticas para construir uma integração robusta com a API Conta Simples. Aqui você encontra padrões para paginação, tratamento de erros, retry e mais — sem duplicar detalhes técnicos de endpoints, que estão na [API Reference](/api-reference/introducao).
+
+---
+
+## Paginação
+
+A API usa **paginação baseada em cursor** para retornar grandes volumes de dados. O campo `nextPageStartKey` funciona como cursor de navegação.
+
+### Como funciona
+
+<Steps>
+  <Step title="Primeira requisição">
+    Envie os parâmetros de filtro e `limit`. Não inclua `nextPageStartKey`.
+  </Step>
+  <Step title="Verifique a resposta">
+    Se `nextPageStartKey` estiver presente e não for `null`, há mais páginas.
+  </Step>
+  <Step title="Próxima página">
+    Envie a mesma requisição incluindo o `nextPageStartKey` da resposta anterior.
+  </Step>
+  <Step title="Última página">
+    Quando `nextPageStartKey` for `null` ou ausente, você chegou ao fim.
+  </Step>
+</Steps>
+
+### Exemplo completo
+
+```typescript
+async function getAllTransactions(
+  baseUrl: string,
+  token: string,
+  startDate: string,
+  endDate: string
+) {
+  const allTransactions: any[] = [];
+  let nextPageKey: string | undefined;
+
+  while (true) {
+    const payload: Record<string, any> = {
+      startDate,
+      endDate,
+      limit: 100,
+    };
+
+    if (nextPageKey) {
+      payload.nextPageStartKey = nextPageKey;
+    }
+
+    const response = await fetch(`${baseUrl}/credit-card`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    allTransactions.push(...data.transactions);
+
+    nextPageKey = data.nextPageStartKey;
+    if (!nextPageKey) break;
+  }
+
+  return allTransactions;
+}
+```
+
+<Note>
+O `nextPageStartKey` é um token opaco. Não tente decodificar ou modificar — use exatamente como recebido.
+</Note>
+
+### Regras
+
+| Regra | Valor |
+|-------|-------|
+| Limite mínimo por página | 5 itens |
+| Limite máximo por página | 100 itens |
+| Período máximo por consulta | 62 dias |
+
+Para períodos maiores, divida em múltiplas consultas sequenciais.
+
+---
+
+## Tratamento de erros
+
+### Categorias de erros
+
+| Código | Significado | Ação recomendada |
+|--------|-------------|------------------|
+| `400` | Parâmetros inválidos | Corrija os parâmetros e tente novamente |
+| `401` | Token inválido ou expirado | Renove o token e repita a requisição |
+| `403` | Sem permissão | Verifique escopos e ambiente |
+| `404` | Recurso não encontrado | Verifique o ID no path |
+| `5xx` | Erro do servidor | Retry com backoff exponencial |
+
+<Card title="Diagnóstico detalhado" icon="triangle-exclamation" href="/operacao/erros-comuns">
+  Veja causas, exemplos e soluções para cada código de erro.
+</Card>
+
+### Retry com backoff exponencial
+
+Para erros transitórios (5xx, timeout), implemente retry automático:
+
+```typescript
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
+
+async function requestWithRetry(
+  method: string,
+  url: string,
+  maxRetries = 3,
+  options?: RequestInit
+): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+
+      const response = await fetch(url, {
+        method,
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!RETRYABLE_STATUS.has(response.status)) {
+        return response;
+      }
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) throw err;
+      // Trata timeout como retryable
+    }
+
+    if (attempt < maxRetries - 1) {
+      const waitTime = 2 ** attempt + Math.random();
+      await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
+    }
+  }
+
+  throw new Error("Max retries exceeded");
+}
+```
+
+### Renovação automática de token
+
+Para erros `401`, renove o token automaticamente:
+
+```typescript
+async function requestWithAuthRetry(
+  method: string,
+  url: string,
+  options: RequestInit & { headers: Record<string, string> }
+): Promise<Response> {
+  let response = await fetch(url, { method, ...options });
+
+  if (response.status === 401) {
+    invalidateTokenCache();
+    const newToken = await getFreshToken();
+    options.headers["Authorization"] = `Bearer ${newToken}`;
+    response = await fetch(url, { method, ...options });
+  }
+
+  return response;
+}
+```
+
+---
+
+## Tratamento de valores e datas
+
+### Valores monetários
+
+Valores vêm como `number` (decimais) em **Reais (BRL)**:
+
+```json
+{
+  "amountBrl": 150.75
+}
+```
+
+<Tip>
+Use tipos decimais no seu sistema (não `float`) para evitar erros de arredondamento em cálculos financeiros.
+</Tip>
+
+### Datas
+
+| Contexto | Formato | Exemplo |
+|----------|---------|---------|
+| Parâmetros de entrada | `YYYY-MM-DD` | `2025-01-15` |
+| Campos de resposta | ISO 8601 (UTC) | `2025-01-15T14:30:00.000Z` |
+
+<Warning>
+A timezone de resposta é **UTC**. Converta para o fuso local da sua aplicação se necessário.
+</Warning>
+
+### Transações internacionais
+
+Para transações internacionais, o campo `exchangeRateUsd` indica a taxa de câmbio. O valor em `amountBrl` já vem convertido para Reais — use `exchangeRateUsd` apenas como referência para auditoria.
+
+---
+
+## Idempotência
+
+Use o `id` de cada recurso como chave de idempotência para evitar duplicações:
+
+```typescript
+function processTransaction(transaction: { id: string; [key: string]: any }) {
+  const txnId = transaction.id;
+
+  // Verifica se já processou esta transação
+  if (alreadyProcessed(txnId)) {
+    return; // Ignora duplicata
+  }
+
+  // Processa a transação
+  handleTransaction(transaction);
+
+  // Marca como processada
+  markAsProcessed(txnId);
+}
+```
+
+---
+
+## Download de anexos
+
+Transações podem incluir comprovantes no array `attachments`. Para baixá-los:
+
+1. Extraia o `id` do anexo na resposta de transações
+2. Faça `GET /content/{attachmentId}` — veja [API Reference](/api-reference/download-anexo)
+3. Use o header `Content-Type` da resposta para determinar o formato
+
+### Tipos suportados
+
+| Content-Type | Extensão | Uso típico |
+|--------------|----------|------------|
+| `image/png` | `.png` | Screenshots, fotos |
+| `image/jpeg` | `.jpg` | Fotos, recibos escaneados |
+| `application/pdf` | `.pdf` | Notas fiscais, documentos |
+
+### Exemplo
+
+```typescript
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+
+async function downloadAttachment(
+  baseUrl: string,
+  token: string,
+  attachmentId: string,
+  outputDir = "./downloads"
+): Promise<string> {
+  const response = await fetch(`${baseUrl}/content/${attachmentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const contentType = response.headers.get("Content-Type") ?? "";
+  const extMap: Record<string, string> = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "application/pdf": ".pdf",
+  };
+  const ext = extMap[contentType] ?? ".bin";
+
+  await mkdir(outputDir, { recursive: true });
+  const filepath = path.join(outputDir, `${attachmentId}${ext}`);
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  await writeFile(filepath, buffer);
+
+  return filepath;
+}
+```
+
+---
+
+## Segurança
+
+### Armazenamento de credenciais
+
+<Tabs>
+  <Tab title="Recomendado">
+    - AWS Secrets Manager
+    - HashiCorp Vault
+    - Azure Key Vault
+    - GCP Secret Manager
+    - Variáveis de ambiente em runtime (não em código)
+  </Tab>
+  <Tab title="Evitar">
+    - Hardcoded em código fonte
+    - Arquivos `.env` commitados
+    - Logs de aplicação
+    - Repositórios Git (mesmo privados)
+  </Tab>
+</Tabs>
+
+### Segregação de ambientes
+
+Use variáveis de ambiente distintas para **Sandbox** e **Produção**:
+
+```bash
+# Sandbox
+export OPENAPI_BASE_URL=https://api-sandbox.contasimples.com
+export OPENAPI_API_KEY={API_KEY_SANDBOX}
+
+# Produção
+export OPENAPI_BASE_URL=https://api.contasimples.com
+export OPENAPI_API_KEY={API_KEY_PRODUCAO}
+```
+
+<Warning>
+**Nunca** use credenciais de Produção em ambientes de desenvolvimento ou testes.
+</Warning>
+
+---
+
+## Checklist de produção
+
+- ✅ Autenticação com renovação automática de token
+- ✅ Paginação implementada corretamente
+- ✅ Tratamento de erros por código HTTP
+- ✅ Retry com backoff exponencial para 5xx
+- ✅ Idempotência por ID de recurso
+- ✅ Credenciais em cofre de segredos
+- ✅ Ambientes segregados (Sandbox vs Produção)
+- ✅ Monitoramento e alertas configurados
+- ✅ Logging estruturado com request_id
+
+---
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Fluxo de Integração" icon="route" href="/guias/fluxo-integracao">
+    Passo a passo completo do Sandbox à Produção.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao">
+    Referência técnica dos endpoints.
+  </Card>
+  <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+    Entidades, campos e enumerações.
+  </Card>
+  <Card title="Erros Comuns" icon="triangle-exclamation" href="/operacao/erros-comuns">
+    Diagnóstico detalhado por código de erro.
+  </Card>
+</CardGroup>

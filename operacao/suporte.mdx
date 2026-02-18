@@ -1,0 +1,239 @@
+---
+title: "Suporte & Contato"
+sidebarTitle: "Suporte"
+description: "Como obter ajuda e entrar em contato com o time técnico"
+---
+
+## Canais de suporte
+
+<CardGroup cols={2}>
+  <Card title="Suporte técnico" icon="headset">
+    Para dúvidas de integração, bugs e problemas técnicos.
+  </Card>
+  <Card title="Comercial" icon="handshake">
+    Para questões contratuais, novos recursos e parcerias.
+  </Card>
+</CardGroup>
+
+<Note>
+**TODO:** Adicionar canais específicos (e-mail, telefone, portal de suporte) quando definidos.
+</Note>
+
+---
+
+## Antes de abrir um chamado
+
+### Checklist de auto-atendimento
+
+Antes de contatar o suporte, verifique:
+
+- ✅ Consultei a documentação relevante
+- ✅ Verifiquei o guia de [erros comuns](/operacao/erros-comuns)
+- ✅ Confirmei que estou usando o ambiente correto (Sandbox/Produção)
+- ✅ Credenciais estão corretas e não expiradas
+- ✅ Tentei novamente após alguns minutos (para erros 5xx)
+
+---
+
+## O que enviar no chamado
+
+Para agilizar a resolução, sempre inclua:
+
+### Informações obrigatórias
+
+| Informação | Descrição | Exemplo |
+|------------|-----------|---------|
+| **Request ID** | ID único da requisição (header `X-Request-Id`) | `req_abc123xyz` |
+| **Timestamp** | Data/hora exata do problema (UTC) | `2024-01-15T10:30:00Z` |
+| **Ambiente** | Sandbox ou Produção | `Sandbox` |
+| **Endpoint** | URL e método HTTP | `POST /cards` |
+| **Código de erro** | HTTP status e código de erro | `422 VALIDATION_ERROR` |
+
+### Informações recomendadas
+
+<AccordionGroup>
+  <Accordion title="Payload de request (mascarado)" icon="code">
+    Inclua o corpo da requisição **sem dados sensíveis**:
+    
+    ```json
+    {
+      "holder_name": "J*** S***",
+      "document": "***.***.***-00",
+      "limit": 50000
+    }
+    ```
+    
+    **Mascare:**
+    - Nomes (deixe iniciais)
+    - Documentos (CPF/CNPJ)
+    - Números de cartão
+    - Tokens e credenciais
+  </Accordion>
+  <Accordion title="Resposta de erro" icon="circle-exclamation">
+    Inclua a resposta completa da API:
+    
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Campo obrigatório",
+        "details": [...]
+      },
+      "meta": {
+        "request_id": "req_abc123"
+      }
+    }
+    ```
+  </Accordion>
+  <Accordion title="Headers relevantes" icon="list">
+    Inclua headers enviados (sem Authorization):
+    
+    ```
+    Content-Type: application/json
+    X-Idempotency-Key: uuid-12345
+    X-Request-Id: req_abc123
+    ```
+  </Accordion>
+  <Accordion title="Contexto de negócio" icon="briefcase">
+    Explique o que você estava tentando fazer:
+    
+    *"Tentando emitir cartão virtual para colaborador após aprovação de solicitação no nosso sistema."*
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Template de chamado
+
+Use este template para estruturar seu chamado:
+
+```markdown
+## Resumo
+[Breve descrição do problema]
+
+## Ambiente
+- [ ] Sandbox
+- [ ] Produção
+
+## Detalhes técnicos
+- **Request ID:** 
+- **Timestamp (UTC):** 
+- **Endpoint:** 
+- **Método:** 
+- **Status code:** 
+- **Código de erro:** 
+
+## Payload de request (mascarado)
+```json
+{
+  ...
+}
+```
+
+## Resposta de erro
+```json
+{
+  ...
+}
+```
+
+## Passos para reproduzir
+1. 
+2. 
+3. 
+
+## Comportamento esperado
+[O que deveria acontecer]
+
+## Comportamento atual
+[O que está acontecendo]
+
+## Contexto adicional
+[Qualquer informação relevante]
+
+---
+
+## Níveis de severidade
+
+Ao abrir um chamado, classifique a severidade:
+
+| Severidade | Descrição | Exemplo |
+|------------|-----------|---------|
+| **Crítica** | Sistema totalmente indisponível ou perda de dados | API retornando 500 em todos os endpoints |
+| **Alta** | Funcionalidade crítica impactada | Não consegue emitir cartões |
+| **Média** | Funcionalidade impactada com workaround | Filtro específico não funciona |
+| **Baixa** | Dúvida ou melhoria | Como implementar feature X? |
+
+---
+
+## SLA de resposta
+
+<Note>
+**TODO:** Definir SLAs específicos quando política de suporte estiver estabelecida.
+</Note>
+
+| Severidade | Tempo de primeira resposta |
+|------------|---------------------------|
+| Crítica | A definir |
+| Alta | A definir |
+| Média | A definir |
+| Baixa | A definir |
+
+---
+
+## Dicas para resolução rápida
+
+<AccordionGroup>
+  <Accordion title="Seja específico" icon="crosshairs">
+    Evite: *"Não está funcionando"*
+    
+    Prefira: *"POST /cards retorna 422 com código VALIDATION_ERROR ao enviar campo limit como string ao invés de integer"*
+  </Accordion>
+  <Accordion title="Inclua request_id" icon="fingerprint">
+    O `request_id` permite rastrear sua requisição nos logs do servidor. Sem ele, a investigação demora muito mais.
+  </Accordion>
+  <Accordion title="Reproduza antes de reportar" icon="repeat">
+    Confirme que o problema é reproduzível. Se aconteceu uma vez e não consegue reproduzir, pode ter sido intermitente.
+  </Accordion>
+  <Accordion title="Um problema por chamado" icon="1">
+    Se tem múltiplos problemas, abra chamados separados. Isso facilita rastreamento e resolução.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Recursos adicionais
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/comece-aqui/quickstart">
+    Revisitar os passos iniciais de integração.
+  </Card>
+  <Card title="Erros comuns" icon="triangle-exclamation" href="/operacao/erros-comuns">
+    Diagnóstico de problemas frequentes.
+  </Card>
+  <Card title="Autenticação" icon="key" href="/comece-aqui/autenticacao">
+    Problemas com token ou credenciais.
+  </Card>
+  <Card title="Ambientes" icon="server" href="/comece-aqui/ambientes">
+    Diferenças entre Sandbox e Produção.
+  </Card>
+</CardGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Quanto tempo leva para resolver meu problema?" icon="clock">
+    Depende da severidade e complexidade. Problemas críticos são priorizados. Após análise inicial, o suporte informará uma estimativa.
+  </Accordion>
+  <Accordion title="Posso ligar para o suporte?" icon="phone">
+    Para problemas críticos em produção, pode haver canal telefônico disponível. Confirme com seu contato comercial.
+  </Accordion>
+  <Accordion title="Como acompanho meu chamado?" icon="eye">
+    Você receberá atualizações por e-mail. Detalhes sobre portal de acompanhamento serão fornecidos quando disponíveis.
+  </Accordion>
+  <Accordion title="Posso solicitar features?" icon="lightbulb">
+    Sim! Feedback é bem-vindo. Envie via canal de suporte com a tag "Feature Request".
+  </Accordion>
+</AccordionGroup>

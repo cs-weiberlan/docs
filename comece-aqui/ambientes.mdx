@@ -1,0 +1,248 @@
+---
+title: "Ambientes"
+sidebarTitle: "Ambientes"
+description: "Entenda os ambientes Sandbox e Produção e como acessar suas credenciais"
+---
+
+## Visão geral
+
+A API Conta Simples disponibiliza dois ambientes isolados para diferentes estágios do seu projeto:
+
+<CardGroup cols={2}>
+  <Card title="Sandbox" icon="flask">
+    Ambiente de testes para desenvolvimento e validação de integração. Dados simulados, sem impacto real.
+  </Card>
+  <Card title="Produção" icon="rocket">
+    Ambiente real com dados e transações reais. Requer aprovação e validação prévia.
+  </Card>
+</CardGroup>
+
+---
+
+## Sandbox
+
+### Características
+
+| Aspecto | Descrição |
+|---------|-----------|
+| **Propósito** | Desenvolvimento, testes e validação |
+| **Dados** | Simulados, sem valor real |
+| **Disponibilidade** | 99.5% SLA (pode ter janelas de manutenção) |
+| **Rate limits** | Mais restritivos que produção |
+| **Credenciais** | Específicas para Sandbox |
+
+### URL base
+
+```
+https://api-sandbox.contasimples.com
+```
+
+### O que você pode testar
+
+<AccordionGroup>
+  <Accordion title="Fluxos de cartão" icon="credit-card">
+    - Emissão de cartões virtuais e físicos (simulados)
+    - Ativação e bloqueio
+    - Alteração de limites
+    - Consulta de dados
+  </Accordion>
+  <Accordion title="Transações" icon="receipt">
+    - Simulação de autorizações
+    - Consulta de transações
+    - Estornos
+    - Conciliação
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+**TODO:** Revisar tudo que realmente pode ser testado.
+</Note>
+
+### Dados de teste
+
+O ambiente Sandbox fornece dados pré-configurados para testes:
+
+<Note>
+**TODO:** Listar dados de teste disponíveis (cartões de teste, cenários de erro simulados, etc.).
+</Note>
+
+---
+
+## Produção
+
+### Características
+
+| Aspecto | Descrição |
+|---------|-----------|
+| **Propósito** | Operações reais com clientes |
+| **Dados** | Reais, com valor financeiro |
+| **Disponibilidade** | 99.9% SLA |
+| **Rate limits** | Conforme contrato |
+| **Credenciais** | Específicas para Produção |
+
+### URL base
+
+```
+https://api.contasimples.com
+```
+
+### Requisitos para acesso
+
+<Steps>
+  <Step title="Integração validada em Sandbox">
+    Demonstre que sua integração funciona corretamente no ambiente de testes.
+  </Step>
+  <Step title="Checklist de segurança e boas práticas aprovado">
+    Complete o [checklist de segurança e boas práticas de integração](/guias/boas-praticas#checklist-de-produção).
+  </Step>
+  <Step title="Termos de uso e privacidade aceitos">
+    Termos de uso e política de privacidade revisados e aceitos.
+  </Step>
+  <Step title="Credenciais de produção">
+    Acesse as credenciais de produção no [painel do Internet Banking](https://ib.contasimples.com/integracoes/api/credenciais).
+  </Step>
+</Steps>
+
+---
+
+## Comparativo
+
+| Característica | Sandbox | Produção |
+|---------------|---------|----------|
+| Propósito | Testes | Operações reais |
+| Dados | Simulados | Reais |
+| Impacto financeiro | Nenhum | Real |
+| Credenciais | Específicas Sandbox | Específicas Produção |
+| SLA disponibilidade | 99.5% | 99.9% |
+| Suporte | Horário comercial | 24/7 (conforme contrato) |
+| Rate limits | Restritivos | Conforme contrato |
+
+<Warning>
+**Nunca** use credenciais de Produção em ambientes de desenvolvimento ou testes. Mantenha segregação total.
+</Warning>
+
+---
+
+## Como acessar suas credenciais
+
+As credenciais de **ambos os ambientes** (Sandbox e Produção) são gerenciadas diretamente pelo **Internet Banking da Conta Simples**:
+
+👉 [ib.contasimples.com/integracoes/api/credenciais](https://ib.contasimples.com/integracoes/api/credenciais)
+
+<Steps>
+  <Step title="Acesse o Internet Banking">
+    Faça login no Internet Banking da Conta Simples e navegue até **Integrações → API → Credenciais**.
+  </Step>
+  <Step title="Selecione o ambiente">
+    No painel de credenciais, você verá as credenciais disponíveis para **Sandbox** e **Produção**.
+  </Step>
+  <Step title="Copie API Key e API Secret">
+    Cada ambiente possui:
+    - **API Key** — identificador da sua aplicação
+    - **API Secret** — segredo para autenticação
+  </Step>
+</Steps>
+
+### Permissões de acesso
+
+O acesso ao painel de credenciais é controlado pelo **perfil de usuário** e **permissões** configurados no Internet Banking. Apenas usuários com as permissões adequadas podem visualizar ou gerenciar credenciais.
+
+<Info>
+**Não consegue ver as credenciais?** Solicite acesso ao responsável da sua empresa na Conta Simples. A gestão de permissões é feita internamente pela própria empresa no Internet Banking.
+</Info>
+
+### Promoção para Produção
+
+Quando sua integração estiver validada no Sandbox, suas credenciais de Produção já estarão disponíveis no mesmo painel. Antes de operar em produção, complete o checklist:
+
+- ✅ Integração Sandbox validada
+- ✅ Tratamento de erros implementado
+- ✅ Lógica de retry com backoff
+- ✅ Idempotência em operações críticas
+- ✅ Credenciais armazenadas com segurança
+- ✅ Monitoramento e alertas configurados
+- ✅ Logging de request_id implementado
+
+---
+
+## Boas práticas
+
+### Segregação de ambientes
+
+<Tabs>
+  <Tab title="Configuração">
+    Use variáveis de ambiente para alternar entre ambientes:
+    
+    ```bash
+    # Desenvolvimento/Testes
+    export OPENAPI_ENV=sandbox
+    export OPENAPI_BASE_URL=https://api-sandbox.contasimples.com
+    export OPENAPI_API_KEY={API_KEY_SANDBOX}
+    
+    # Produção
+    export OPENAPI_ENV=production
+    export OPENAPI_BASE_URL=https://api.contasimples.com
+    export OPENAPI_API_KEY={API_KEY_PRODUCAO}
+    ```
+  </Tab>
+  <Tab title="Código">
+    Valide o ambiente antes de operações críticas:
+    
+    ```typescript
+    // Exemplo conceitual
+    function getApiConfig() {
+      const env = process.env.OPENAPI_ENV ?? 'sandbox';
+
+      if (env === 'production') {
+        return new ProductionConfig();
+      }
+      return new SandboxConfig();
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Proteções recomendadas
+
+- **Feature flags**: Use flags para habilitar/desabilitar integrações por ambiente
+- **Logs diferenciados**: Marque logs com o ambiente para facilitar troubleshooting
+- **Alertas**: Configure alertas diferentes para Sandbox e Produção
+- **Revisão de código**: Exija revisão antes de deploy em produção
+
+---
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Posso usar as mesmas credenciais em Sandbox e Produção?" icon="question">
+    **Não.** Cada ambiente tem credenciais específicas e independentes. Isso garante isolamento total entre os ambientes.
+  </Accordion>
+  <Accordion title="Dados do Sandbox aparecem em Produção?" icon="question">
+    **Não.** Os ambientes são completamente isolados. Dados criados em Sandbox não existem em Produção e vice-versa.
+  </Accordion>
+  <Accordion title="Não consigo ver as credenciais no Internet Banking" icon="question">
+    O acesso ao painel de credenciais depende do perfil de usuário e das permissões configuradas no Internet Banking. Solicite acesso ao responsável da sua empresa na Conta Simples.
+  </Accordion>
+  <Accordion title="O Sandbox tem custos?" icon="question">
+    O acesso ao Sandbox geralmente é gratuito para parceiros em fase de integração. Confirme com o time comercial.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Fluxo de Integração" icon="route" href="/guias/fluxo-integracao">
+    Passo a passo completo do Sandbox à Produção.
+  </Card>
+  <Card title="Boas Práticas" icon="shield-check" href="/guias/boas-praticas">
+    Paginação, retry e tratamento de erros.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao">
+    Referência técnica dos endpoints.
+  </Card>
+  <Card title="Suporte" icon="headset" href="/operacao/suporte">
+    Precisa de ajuda? Veja como entrar em contato.
+  </Card>
+</CardGroup>

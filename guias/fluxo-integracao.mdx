@@ -1,0 +1,190 @@
+---
+title: "Fluxo de Integração Recomendado"
+sidebarTitle: "Fluxo de Integração"
+description: "Passo a passo completo para integrar com a API Conta Simples"
+---
+
+## Visão geral
+
+Este guia apresenta o caminho recomendado para integrar com a API Conta Simples, do primeiro contato até a operação em produção. Siga cada etapa na ordem para garantir uma integração segura e eficiente.
+
+<Info>
+**Tempo estimado:** A integração completa pode ser feita em poucos dias, dependendo da complexidade do seu caso de uso.
+</Info>
+
+---
+
+## Etapas da integração
+
+<Steps>
+  <Step title="Obter credenciais">
+    Acesse o **Internet Banking da Conta Simples** para obter suas credenciais de **Sandbox**:
+
+    👉 [ib.contasimples.com/integracoes/api/credenciais](https://ib.contasimples.com/integracoes/api/credenciais)
+
+    **O que você vai encontrar:**
+    - **API Key** — identificador da sua aplicação
+    - **API Secret** — segredo para autenticação
+
+    <Info>
+    Não consegue ver as credenciais? O acesso depende do seu perfil de usuário e permissões. Solicite acesso ao responsável da sua empresa.
+    </Info>
+
+    <Card title="Ambientes e credenciais" icon="key" href="/comece-aqui/ambientes#como-acessar-suas-credenciais">
+      Veja detalhes sobre como acessar e gerenciar credenciais.
+    </Card>
+  </Step>
+
+  <Step title="Obter token de acesso">
+    Com as credenciais em mãos, autentique-se via **OAuth 2.0 Client Credentials** para obter um `access_token`.
+
+    ```bash
+    curl -X POST https://api-sandbox.contasimples.com/oauth/token \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "grant_type=client_credentials" \
+      -d "client_id={SUA_API_KEY}" \
+      -d "client_secret={SEU_API_SECRET}"
+    ```
+
+    O token retornado tem validade de **1 hora**. Implemente renovação automática.
+
+    <Card title="Guia de Autenticação" icon="lock" href="/comece-aqui/autenticacao">
+      Fluxo completo de autenticação, renovação e boas práticas.
+    </Card>
+  </Step>
+
+  <Step title="Testar no Sandbox">
+    Use o ambiente Sandbox para validar sua integração sem risco. Os dados são simulados e não têm impacto financeiro real.
+
+    **Valide:**
+    - Autenticação está funcionando
+    - Requisições retornam dados esperados
+    - Tratamento de erros está implementado
+
+    <Card title="Ambientes" icon="flask" href="/comece-aqui/ambientes">
+      Diferenças entre Sandbox e Produção.
+    </Card>
+  </Step>
+
+  <Step title="Consultar transações de cartão">
+    Faça sua primeira consulta ao extrato de transações usando o endpoint `POST /credit-card`. A resposta contém transações do período, incluindo dados do cartão, categoria, centro de custo e anexos.
+
+    ```bash
+    curl -X POST https://api-sandbox.contasimples.com/credit-card \
+      -H "Authorization: Bearer {TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "startDate": "2025-01-01",
+        "endDate": "2025-01-31",
+        "limit": 10
+      }'
+    ```
+
+    <CardGroup cols={2}>
+      <Card title="Endpoint: POST /credit-card" icon="code" href="/api-reference/extrato-cartao">
+        Referência técnica completa com parâmetros e schemas.
+      </Card>
+      <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+        Significado de cada campo retornado.
+      </Card>
+    </CardGroup>
+  </Step>
+
+  <Step title="Tratar paginação">
+    Para grandes volumes de dados, a API retorna resultados paginados via cursor (`nextPageStartKey`).
+
+    **Fluxo:**
+    1. Envie a primeira requisição sem `nextPageStartKey`
+    2. Se a resposta incluir `nextPageStartKey`, envie-o na próxima requisição
+    3. Repita até `nextPageStartKey` ser `null` ou ausente
+
+    <Card title="Boas Práticas → Paginação" icon="arrow-right" href="/guias/boas-praticas#paginação">
+      Exemplo completo de paginação com código.
+    </Card>
+  </Step>
+
+  <Step title="Consumir anexos">
+    Transações podem incluir comprovantes (notas fiscais, recibos). Baixe-os via `GET /content/{attachmentId}`.
+
+    **Fluxo:**
+    1. Consulte transações e verifique o array `attachments`
+    2. Para cada anexo, extraia o `id`
+    3. Faça `GET /content/{id}` para baixar o arquivo binário
+    4. Use o header `Content-Type` da resposta para determinar o formato (PNG, JPEG, PDF)
+
+    <CardGroup cols={2}>
+      <Card title="Boas Práticas → Anexos" icon="shield-check" href="/guias/boas-praticas#download-de-anexos">
+        Exemplo de download e processamento.
+      </Card>
+      <Card title="Endpoint: GET /content/{id}" icon="code" href="/api-reference/download-anexo">
+        Referência técnica do endpoint.
+      </Card>
+    </CardGroup>
+  </Step>
+
+  <Step title="Ir para produção">
+    Quando sua integração estiver validada no Sandbox, solicite a promoção para o ambiente de **Produção**.
+
+    **Checklist de go-live:**
+
+    - ✅ Integração Sandbox validada com todos os fluxos
+    - ✅ Autenticação com renovação automática de token
+    - ✅ Paginação implementada corretamente
+    - ✅ Tratamento de erros (401, 400, 500) implementado
+    - ✅ Lógica de retry com backoff exponencial
+    - ✅ Idempotência em operações críticas
+    - ✅ Credenciais armazenadas em cofre de segredos
+    - ✅ Monitoramento e alertas configurados
+    - ✅ Logging estruturado com request_id
+
+    <Card title="Ir para Produção" icon="rocket" href="/comece-aqui/ambientes#promoção-para-produção">
+      Veja os requisitos e o checklist de go-live.
+    </Card>
+  </Step>
+</Steps>
+
+---
+
+## Resumo visual do fluxo
+
+```mermaid
+graph LR
+    A[Obter Credenciais] --> B[Obter Token]
+    B --> C[Testar Sandbox]
+    C --> D[Consultar Transações]
+    D --> E[Tratar Paginação]
+    E --> F[Consumir Anexos]
+    F --> G[Ir para Produção]
+
+    style A fill:#3B82F6,color:#fff
+    style G fill:#10B981,color:#fff
+```
+
+---
+
+## Referência rápida de endpoints
+
+| Etapa | Endpoint | Referência |
+|-------|----------|------------|
+| Autenticação | `POST /oauth/token` | [Autenticação](/comece-aqui/autenticacao) |
+| Transações | `POST /credit-card` | [API Reference](/api-reference/extrato-cartao) |
+| Anexos | `GET /content/{attachmentId}` | [API Reference](/api-reference/download-anexo) |
+
+---
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Quickstart (5 min)" icon="rocket" href="/comece-aqui/quickstart">
+    Faça sua primeira chamada de API agora.
+  </Card>
+  <Card title="Boas Práticas" icon="shield-check" href="/guias/boas-praticas">
+    Paginação, retry e tratamento de erros.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao">
+    Referência técnica completa dos endpoints.
+  </Card>
+  <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
+    Entidades, campos e enumerações.
+  </Card>
+</CardGroup>

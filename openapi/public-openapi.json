@@ -1,0 +1,546 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Conta Simples",
+    "version": "v1",
+    "description": "Referência técnica da API Conta Simples. Consulte extratos de cartão e faça download de anexos (comprovantes, notas fiscais e recibos)."
+  },
+  "servers": [
+    {
+      "url": "https://api-sandbox.contasimples.com",
+      "description": "Sandbox"
+    },
+    {
+      "url": "https://api.contasimples.com",
+      "description": "Produção"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoint para obtenção de token de acesso via OAuth 2.0 Client Credentials."
+    },
+    {
+      "name": "Cartões & Transações",
+      "description": "Endpoints para consulta de extratos e transações de cartão."
+    },
+    {
+      "name": "Anexos",
+      "description": "Endpoints para download de comprovantes e anexos de transações."
+    }
+  ],
+  "paths": {
+    "/oauth/token": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Obter Token de Acesso",
+        "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials. Use a **API Key** como `client_id` e o **API Secret** como `client_secret`.\n\nAs credenciais são gerenciadas pelo [Internet Banking da Conta Simples](https://ib.contasimples.com/integracoes/api/credenciais).\n\n**Importante:**\n- O token expira em **1 hora** (`expires_in: 3600`).\n- Renove o token **antes** da expiração para evitar interrupções.\n- Use `Content-Type: application/x-www-form-urlencoded` (não JSON).",
+        "operationId": "getAccessToken",
+        "security": [],
+        "requestBody": {
+          "description": "Credenciais OAuth 2.0 Client Credentials.",
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token de acesso gerado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenResponse"
+                },
+                "example": {
+                  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "token_type": "Bearer",
+                  "expires_in": 3600
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique o `grant_type`, `Content-Type` e formato dos parâmetros."
+          },
+          "401": {
+            "description": "Credenciais inválidas. Verifique se a API Key e o API Secret estão corretos."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/credit-card": {
+      "post": {
+        "tags": ["Cartões & Transações"],
+        "summary": "Extrato de Cartão",
+        "description": "Consulta o extrato de transações de cartão por período. Retorna uma lista paginada de transações com dados do cartão, categoria, centro de custo, status e anexos.\n\n**Regras:**\n- O período entre `startDate` e `endDate` não pode exceder **62 dias**.\n- O `limit` deve estar entre **5** e **100** itens por página.\n- Use `nextPageStartKey` para navegar entre páginas (paginação por cursor).",
+        "operationId": "getCreditCardStatement",
+        "requestBody": {
+          "description": "Filtros de consulta do extrato de cartão.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardsTransactionRequest"
+              },
+              "example": {
+                "startDate": "2025-09-01",
+                "endDate": "2025-09-30",
+                "limit": 50
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Extrato retornado com sucesso. Contém a lista de transações e, opcionalmente, a chave para a próxima página.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardsTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique os parâmetros enviados (datas, limite, formato)."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/content/{attachmentId}": {
+      "get": {
+        "tags": ["Anexos"],
+        "summary": "Download de Anexo",
+        "description": "Faz o download do conteúdo binário de um anexo vinculado a uma transação. Os IDs dos anexos são retornados no array `attachments` de cada transação no endpoint de extrato.\n\n**Formatos suportados:**\n- `image/png` — Screenshots, fotos\n- `image/jpeg` — Fotos, recibos escaneados\n- `application/pdf` — Notas fiscais, documentos",
+        "operationId": "downloadAttachment",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "description": "ID único do anexo, obtido no array `attachments` da resposta do extrato de cartão.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conteúdo binário do anexo. O formato é indicado pelo header `Content-Type` da resposta.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Anexo não encontrado. Verifique se o `attachmentId` está correto."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OAuthTokenRequest": {
+        "type": "object",
+        "description": "Parâmetros para obtenção de token via OAuth 2.0 Client Credentials.",
+        "required": [
+          "grant_type",
+          "client_id",
+          "client_secret"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": ["client_credentials"],
+            "description": "Tipo de concessão OAuth 2.0. Sempre `client_credentials`.",
+            "example": "client_credentials"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "API Key obtida no Internet Banking da Conta Simples.",
+            "example": "sua-api-key"
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "API Secret obtido no Internet Banking da Conta Simples.",
+            "example": "seu-api-secret"
+          }
+        }
+      },
+      "OAuthTokenResponse": {
+        "type": "object",
+        "description": "Resposta com o token de acesso JWT.",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "Token JWT para autenticação nas chamadas à API. Inclua no header `Authorization: Bearer {token}`."
+          },
+          "token_type": {
+            "type": "string",
+            "enum": ["Bearer"],
+            "description": "Tipo do token. Sempre `Bearer`."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Tempo de vida do token em segundos. Padrão: 3600 (1 hora).",
+            "example": 3600
+          }
+        }
+      },
+      "CardsTransactionRequest": {
+        "type": "object",
+        "description": "Parâmetros de consulta do extrato de cartão.",
+        "required": [
+          "startDate",
+          "endDate",
+          "limit"
+        ],
+        "properties": {
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco de paginação retornado na resposta anterior. Use exatamente como recebido para obter a próxima página."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-09-01",
+            "description": "Data de início do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias."
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-09-30",
+            "description": "Data de fim do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 100,
+            "example": 50,
+            "description": "Número máximo de transações por página. Mínimo: 5, Máximo: 100."
+          }
+        }
+      },
+      "Card": {
+        "type": "object",
+        "description": "Dados do cartão associado à transação.",
+        "required": [
+          "id",
+          "maskedNumber",
+          "responsibleEmail",
+          "responsibleName",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do cartão."
+          },
+          "maskedNumber": {
+            "type": "string",
+            "description": "Número do cartão mascarado (ex: **** **** **** 1234)."
+          },
+          "responsibleName": {
+            "type": "string",
+            "description": "Nome do responsável pelo cartão."
+          },
+          "responsibleEmail": {
+            "type": "string",
+            "description": "E-mail do responsável pelo cartão."
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo do cartão.",
+            "enum": [
+              "VIRTUAL",
+              "PHYSICAL"
+            ]
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "description": "Categoria de despesa associada à transação.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único da categoria."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome da categoria (ex: Alimentação, Transporte)."
+          }
+        }
+      },
+      "CostCenter": {
+        "type": "object",
+        "description": "Centro de custo associado à transação.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do centro de custo."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do centro de custo."
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "description": "Link HATEOAS para recurso relacionado.",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "type": "string",
+            "example": "/content/{id}",
+            "description": "URL relativa do recurso vinculado."
+          },
+          "rel": {
+            "type": "string",
+            "example": "GET",
+            "description": "Método HTTP para acessar o recurso."
+          }
+        }
+      },
+      "AttachmentLinks": {
+        "type": "object",
+        "description": "Links para download do conteúdo do anexo.",
+        "required": [
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/Link"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "description": "Anexo vinculado a uma transação (comprovante, nota fiscal, recibo).",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do anexo. Use este ID no endpoint GET /content/{attachmentId} para download."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do arquivo do anexo."
+          },
+          "_links": {
+            "$ref": "#/components/schemas/AttachmentLinks"
+          }
+        }
+      },
+      "CardTransaction": {
+        "type": "object",
+        "description": "Transação de cartão com todos os dados associados.",
+        "required": [
+          "amountBrl",
+          "attachments",
+          "card",
+          "category",
+          "costCenter",
+          "exchangeRateUsd",
+          "id",
+          "installment",
+          "isCanceled",
+          "isConciled",
+          "merchant",
+          "operation",
+          "status",
+          "transactionDate",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único da transação."
+          },
+          "operation": {
+            "type": "string",
+            "description": "Tipo de operação da transação.",
+            "enum": [
+              "CASH_IN",
+              "CASH_OUT"
+            ]
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora da transação (ISO 8601).",
+            "example": "2025-09-15T14:30:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status atual da transação.",
+            "enum": [
+              "PENDING",
+              "PROCESSED",
+              "CANCELED"
+            ]
+          },
+          "isCanceled": {
+            "type": "boolean",
+            "description": "Indica se a transação foi cancelada."
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo detalhado da transação.",
+            "enum": [
+              "PURCHASE",
+              "PURCHASE_INTERNATIONAL",
+              "PURCHASE_BNPL",
+              "WITHDRAW",
+              "WITHDRAW_INTERNATIONAL",
+              "WITHDRAW_FUNDS",
+              "BALANCE_INQUIRY",
+              "PAYMENT_PLAN_INQUIRY",
+              "REFUND",
+              "REFUND_INTERNATIONAL",
+              "REFUND_CREDIT_ADJUSTMENT",
+              "REVERSAL_CREDIT_ADJUSTMENT",
+              "REFUND_IOF",
+              "REFUND_PURCHASE_BNPL",
+              "IOF",
+              "LIMIT",
+              "LIMIT_CREDIT",
+              "SUMMARY",
+              "BILL_TARIFF",
+              "REFUND_BILL_TARIFF",
+              "INVOICE_PAYMENT"
+            ]
+          },
+          "merchant": {
+            "type": "string",
+            "description": "Nome do estabelecimento onde a transação foi realizada."
+          },
+          "amountBrl": {
+            "type": "number",
+            "description": "Valor da transação em Reais (BRL).",
+            "example": 150.75
+          },
+          "exchangeRateUsd": {
+            "type": "number",
+            "description": "Taxa de câmbio em dólar (USD). Presente em transações internacionais — use apenas como referência para auditoria.",
+            "example": 5.12
+          },
+          "card": {
+            "$ref": "#/components/schemas/Card"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "costCenter": {
+            "$ref": "#/components/schemas/CostCenter"
+          },
+          "isConciled": {
+            "type": "boolean",
+            "description": "Indica se a transação foi conciliada."
+          },
+          "installment": {
+            "type": "number",
+            "description": "Número da parcela (para compras parceladas).",
+            "example": 1
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Lista de anexos vinculados à transação (comprovantes, notas fiscais, recibos).",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        }
+      },
+      "CardsTransactionResponse": {
+        "type": "object",
+        "description": "Resposta paginada do extrato de cartão.",
+        "required": [
+          "transactions"
+        ],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "description": "Lista de transações do período consultado.",
+            "items": {
+              "$ref": "#/components/schemas/CardTransaction"
+            }
+          },
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco para a próxima página. Se ausente, não há mais páginas. Use este valor no campo `nextPageStartKey` da próxima requisição."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token Bearer obtido via OAuth 2.0 Client Credentials. Formato: `Bearer {token}`"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}

@@ -1,0 +1,410 @@
+---
+title: "Erros comuns"
+sidebarTitle: "Erros comuns"
+description: "Diagnóstico e resolução dos erros mais frequentes"
+---
+
+## Visão geral
+
+Este guia ajuda a diagnosticar e resolver os erros mais comuns ao integrar com a API Conta Simples. Os erros são organizados por categoria de código HTTP.
+
+<Tip>
+Antes de contatar o suporte, use o [Checklist de diagnóstico](#checklist-de-diagnóstico) no final desta página.
+</Tip>
+
+---
+
+## Erros da API por endpoint
+
+### POST /credit-card
+
+O endpoint de extrato de transações pode retornar:
+
+| Código | Descrição | Causa comum |
+|--------|-----------|-------------|
+| `200` | OK | Sucesso |
+| `400` | Bad Request | Parâmetros inválidos |
+| `500` | Internal Server Error | Erro interno |
+
+### GET /content/{attachmentId}
+
+O endpoint de download de anexos pode retornar:
+
+| Código | Descrição | Causa comum |
+|--------|-----------|-------------|
+| `200` | OK | Sucesso (retorna binário) |
+| `404` | Not Found | Anexo não existe |
+
+---
+
+## Erros de validação (400)
+
+### Sintomas
+
+- `400 Bad Request`
+- Parâmetros inválidos no body da requisição
+
+### Causas específicas para POST /credit-card
+
+<AccordionGroup>
+  <Accordion title="Formato de data inválido" icon="calendar">
+    **Causa:** `startDate` ou `endDate` não estão no formato `YYYY-MM-DD`.
+    
+    **Incorreto:**
+    ```json
+    {
+      "startDate": "01/01/2025",
+      "endDate": "31/01/2025"
+    }
+    ```
+    
+    **Correto:**
+    ```json
+    {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Período excede 62 dias" icon="clock">
+    **Causa:** A diferença entre `startDate` e `endDate` excede 62 dias.
+    
+    **Solução:** Divida a consulta em períodos menores:
+    ```typescript
+    // Exemplo: consultar 90 dias em duas requisições
+    // Requisição 1: 01/01 a 28/02 (59 dias)
+    // Requisição 2: 01/03 a 31/03 (31 dias)
+    ```
+  </Accordion>
+  
+  <Accordion title="Limite fora do range" icon="sliders">
+    **Causa:** `limit` menor que 5 ou maior que 100.
+    
+    **Incorreto:**
+    ```json
+    {
+      "limit": 200
+    }
+    ```
+    
+    **Correto:**
+    ```json
+    {
+      "limit": 100
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Campo obrigatório ausente" icon="asterisk">
+    **Causa:** `startDate`, `endDate` ou `limit` não informados.
+    
+    **Solução:** Inclua todos os campos obrigatórios:
+    ```json
+    {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31",
+      "limit": 50
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="JSON malformado" icon="code">
+    **Causa:** Sintaxe JSON inválida.
+    
+    **Verifique:**
+    - Aspas duplas em todas as strings
+    - Vírgulas entre campos
+    - Chaves de abertura/fechamento
+    
+    **Dica:** Use um validador JSON online antes de enviar.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Erros de autenticação (401)
+
+### Sintomas
+
+- `401 Unauthorized`
+- Mensagens como "Token inválido", "Token expirado", "Não autorizado"
+
+### Causas e soluções
+
+<AccordionGroup>
+  <Accordion title="Token expirado" icon="clock">
+    **Causa:** O access token excedeu seu tempo de vida (normalmente 1 hora).
+    
+    **Solução:**
+    1. Obtenha um novo token via `/oauth/token`
+    2. Implemente renovação automática antes da expiração
+    
+    ```typescript
+    // Exemplo: renovar quando faltar 10% do tempo
+    if (tokenAge > expiresIn * 0.9) {
+      const token = await refreshToken();
+    }
+    ```
+  </Accordion>
+  <Accordion title="Token ausente" icon="key">
+    **Causa:** Header `Authorization` não enviado.
+    
+    **Solução:** Verifique se está incluindo o header em todas as requisições:
+    ```bash
+    curl -X POST https://api-sandbox.contasimples.com/credit-card \
+      -H "Authorization: Bearer {TOKEN}" \
+      -H "Content-Type: application/json"
+    ```
+  </Accordion>
+  <Accordion title="Formato incorreto" icon="circle-xmark">
+    **Causa:** Token malformado ou prefixo errado.
+    
+    **Incorreto:**
+    ```
+    Authorization: {TOKEN}
+    Authorization: bearer {TOKEN}
+    Authorization:Bearer {TOKEN}
+    ```
+    
+    **Correto:**
+    ```
+    Authorization: Bearer {TOKEN}
+    ```
+    (Note o espaço após "Bearer" e o "B" maiúsculo)
+  </Accordion>
+  <Accordion title="Credenciais inválidas" icon="ban">
+    **Causa:** API Key ou API Secret incorretos ao obter token.
+    
+    **Solução:**
+    1. Verifique as credenciais no seu cofre de segredos
+    2. Confirme que está usando credenciais do ambiente correto (Sandbox vs Produção)
+    3. Se necessário, acesse o [painel de credenciais](https://ib.contasimples.com/integracoes/api/credenciais) no Internet Banking para verificar ou gerar novas credenciais
+  </Accordion>
+</AccordionGroup>
+
+### Padrão de retry para 401
+
+```typescript
+async function requestWithAuthRetry(
+  method: string,
+  url: string,
+  options: RequestInit & { headers: Record<string, string> }
+): Promise<Response> {
+  let response = await fetch(url, { method, ...options });
+
+  if (response.status === 401) {
+    // Invalida cache do token
+    invalidateTokenCache();
+
+    // Obtém novo token
+    const newToken = await getFreshToken();
+
+    // Repete a requisição
+    options.headers["Authorization"] = `Bearer ${newToken}`;
+    response = await fetch(url, { method, ...options });
+  }
+
+  return response;
+}
+```
+
+---
+
+## Erros de permissão (403)
+
+### Sintomas
+
+- `403 Forbidden`
+- Mensagens como "Sem permissão", "Acesso negado", "Escopo insuficiente"
+
+### Causas e soluções
+
+<AccordionGroup>
+  <Accordion title="Escopo insuficiente" icon="shield">
+    **Causa:** Suas credenciais não têm permissão para o recurso solicitado.
+    
+    **Solução:**
+    1. Verifique quais escopos suas credenciais possuem
+    2. Se precisar de escopos adicionais, solicite via [suporte](/operacao/suporte)
+  </Accordion>
+  <Accordion title="Ambiente incorreto" icon="server">
+    **Causa:** Usando credenciais de Sandbox para acessar Produção (ou vice-versa).
+    
+    **Solução:** Confirme que URL base e credenciais são do mesmo ambiente.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Erros de recurso (404)
+
+### Sintomas
+
+- `404 Not Found`
+- Recurso não encontrado
+
+### Causas específicas para GET /content/{attachmentId}
+
+<AccordionGroup>
+  <Accordion title="ID de anexo inexistente" icon="magnifying-glass">
+    **Causa:** O `attachmentId` não existe ou foi removido.
+    
+    **Solução:**
+    1. Verifique se o ID está correto (obtido da transação)
+    2. Confirme que a transação ainda existe
+    3. O anexo pode ter sido excluído
+  </Accordion>
+  <Accordion title="URL incorreta" icon="route">
+    **Causa:** Path montado incorretamente.
+    
+    **Incorreto:**
+    ```
+    GET /content/
+    GET /attachment/att_abc123
+    ```
+    
+    **Correto:**
+    ```
+    GET /content/att_abc123
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Erros de servidor (500)
+
+### Sintomas
+
+- `500 Internal Server Error`
+- Erro inesperado no servidor
+
+### Solução
+
+<Steps>
+  <Step title="Aguarde e tente novamente">
+    Erros 500 podem ser transitórios. Aguarde alguns segundos e repita.
+  </Step>
+  <Step title="Implemente retry com backoff">
+    Use backoff exponencial para evitar sobrecarregar o servidor.
+  </Step>
+  <Step title="Registre o timestamp e dados">
+    Anote quando ocorreu e quais parâmetros enviou.
+  </Step>
+  <Step title="Contate o suporte se persistir">
+    Se o erro persistir após 3-5 tentativas, abra um chamado.
+  </Step>
+</Steps>
+
+### Padrão de retry para 500
+
+```typescript
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
+
+async function requestWithRetry(
+  method: string,
+  url: string,
+  maxRetries = 3,
+  options?: RequestInit
+): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+
+      const response = await fetch(url, {
+        method,
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!RETRYABLE_STATUS.has(response.status)) {
+        return response;
+      }
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) throw err;
+      // Trata timeout como retryable
+    }
+
+    if (attempt < maxRetries - 1) {
+      const waitTime = 2 ** attempt + Math.random();
+      await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
+    }
+  }
+
+  throw new Error("Max retries exceeded");
+}
+```
+
+---
+
+## Checklist de diagnóstico
+
+Antes de contatar o suporte, verifique:
+
+- ✅ URL base está correta para o ambiente (Sandbox/Produção)
+- ✅ Token não expirou (válido por 1 hora)
+- ✅ Header Authorization está no formato `Bearer {TOKEN}`
+- ✅ Header Content-Type é `application/json`
+- ✅ Body JSON está bem formado
+- ✅ Datas estão no formato `YYYY-MM-DD`
+- ✅ Período não excede 62 dias
+- ✅ Limit está entre 5 e 100
+- ✅ Tentou novamente após alguns segundos (para erros 5xx)
+
+---
+
+## Informações para o suporte
+
+Ao contatar o [suporte](/operacao/suporte), sempre inclua:
+
+| Informação | Descrição | Exemplo |
+|------------|-----------|---------|
+| **Timestamp** | Data/hora exata (UTC) | `2025-01-15T14:30:00Z` |
+| **Ambiente** | Sandbox ou Produção | `Sandbox` |
+| **Endpoint** | URL e método | `POST /credit-card` |
+| **Status code** | Código HTTP retornado | `400` |
+| **Request body** | Payload enviado (mascarado) | Ver abaixo |
+| **Response body** | Resposta da API | Ver abaixo |
+
+### Exemplo de payload mascarado para suporte
+
+```json
+// Request enviado
+{
+  "startDate": "2025-01-01",
+  "endDate": "2025-01-31",
+  "limit": 50
+}
+
+// Response recebido
+{
+  "error": "Bad Request",
+  "message": "startDate format is invalid"
+}
+```
+
+<Warning>
+**Nunca** inclua tokens, credenciais ou dados pessoais ao reportar problemas.
+</Warning>
+
+---
+
+## Links úteis
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/comece-aqui/quickstart">
+    Revisitar passos iniciais.
+  </Card>
+  <Card title="Autenticação" icon="key" href="/comece-aqui/autenticacao">
+    Problemas com token ou credenciais.
+  </Card>
+  <Card title="Endpoint: POST /credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
+    Referência técnica do endpoint de extrato.
+  </Card>
+  <Card title="Endpoint: GET /content/{id}" icon="paperclip" href="/api-reference/download-anexo">
+    Referência técnica do endpoint de anexos.
+  </Card>
+</CardGroup>

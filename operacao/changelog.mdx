@@ -1,0 +1,152 @@
+---
+title: "Changelog"
+description: "Histórico de mudanças da API e da plataforma"
+---
+
+## Sobre o changelog
+
+Este changelog documenta todas as mudanças significativas na API Conta Simples, incluindo novas funcionalidades, alterações e correções. Seguimos o padrão [Keep a Changelog](https://keepachangelog.com/).
+
+<Info>
+Este é um **modelo de changelog**. As entradas reais serão adicionadas conforme a API evolui.
+</Info>
+
+---
+
+## Convenções
+
+Cada release é documentada com os seguintes tipos de mudança:
+
+| Tipo | Descrição |
+|------|-----------|
+| **Added** | Novas funcionalidades |
+| **Changed** | Mudanças em funcionalidades existentes |
+| **Deprecated** | Funcionalidades que serão removidas em versões futuras |
+| **Removed** | Funcionalidades removidas |
+| **Fixed** | Correções de bugs |
+| **Security** | Correções de vulnerabilidades |
+
+---
+
+## Versionamento
+
+A API segue [Semantic Versioning](https://semver.org/):
+
+- **MAJOR**: Mudanças incompatíveis (breaking changes)
+- **MINOR**: Novas funcionalidades compatíveis
+- **PATCH**: Correções compatíveis
+
+<Note>
+Breaking changes são comunicados com **mínimo de 90 dias** de antecedência e documentados neste changelog.
+</Note>
+
+---
+
+## Releases
+
+### [Unreleased]
+
+Mudanças que estão em desenvolvimento e serão incluídas na próxima release.
+
+#### Added
+- *Nenhuma mudança pendente*
+
+#### Changed
+- *Nenhuma mudança pendente*
+
+---
+
+### [1.0.0] - YYYY-MM-DD
+
+<Note>
+**TODO:** Documentar versão inicial quando API estiver em produção.
+</Note>
+
+#### Added
+- Documentação inicial do Developer Portal
+- Guias de integração: Cartões, Transações
+- Seção de Operação: Erros comuns, Suporte
+
+---
+
+## Modelo de entrada
+
+Use este modelo para documentar novas releases:
+
+```markdown
+### [X.Y.Z] - YYYY-MM-DD
+
+#### Added
+- Novo endpoint POST /recurso para criar recursos
+- Suporte a filtro por data em GET /transacoes
+
+
+#### Changed
+- Campo `status` agora aceita valor "pending_review"
+- Rate limit aumentado de 100 para 200 req/min
+
+#### Deprecated
+- Parâmetro `legacy_field` será removido na versão 2.0
+- Endpoint GET /v1/old-endpoint use GET /v2/new-endpoint
+
+#### Removed
+- Removido suporte a autenticação Basic Auth
+
+#### Fixed
+- Correção no cálculo de paginação quando total_items = 0
+- Timezone correto em campos de data
+
+#### Security
+- Atualização de dependências com vulnerabilidades conhecidas
+```
+
+---
+
+## Notificações de mudanças
+
+### Como ser notificado
+
+<CardGroup cols={2}>
+  <Card title="E-mail" icon="envelope">
+    Parceiros cadastrados recebem notificações de mudanças por e-mail.
+  </Card>
+</CardGroup>
+
+### Breaking changes
+
+Para mudanças incompatíveis:
+
+<Steps>
+  <Step title="Anúncio (D-90)">
+    Comunicação via e-mail e entrada neste changelog com label **Deprecated**.
+  </Step>
+  <Step title="Documentação (D-60)">
+    Guia de migração disponibilizado com exemplos de código.
+  </Step>
+  <Step title="Lembrete (D-30)">
+    Novo comunicado reforçando a mudança.
+  </Step>
+  <Step title="Implementação (D-0)">
+    Mudança entra em vigor. Endpoint/feature antigo deixa de funcionar.
+  </Step>
+</Steps>
+
+---
+
+## Status da plataforma
+
+Para status em tempo real da plataforma (disponibilidade, incidentes, manutenções):
+
+<Card title="Suporte" icon="headset" href="/operacao/suporte">
+  Entre em contato com o suporte para informações sobre status e incidentes.
+</Card>
+
+---
+
+## Feedback
+
+Tem sugestões para a API ou documentação?
+
+<Card title="Suporte & Contato" icon="message" href="/operacao/suporte">
+  Envie seu feedback através dos canais de suporte.
+</Card>

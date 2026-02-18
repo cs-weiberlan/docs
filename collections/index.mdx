@@ -1,0 +1,131 @@
+---
+title: "Collections"
+description: "Baixe a Postman Collection e o Environment da API Conta Simples para testar os endpoints rapidamente."
+icon: "rocket"
+---
+
+{/* TODO:
+  Publicar a Postman Collection e os Environments em um workspace público no Postman e,
+  após isso, incluir o botão oficial "Run in Postman" nesta página.
+*/}
+
+# Postman Collection & Environment
+
+Use a collection pronta para testar a API Conta Simples diretamente no **Postman**, **Insomnia** ou **Bruno** — sem precisar configurar cada request manualmente.
+
+<Info>
+A collection foi gerada a partir do **OpenAPI 3.0.3** oficial da API e contém apenas os endpoints documentados.
+</Info>
+
+---
+
+## Downloads
+
+<CardGroup cols={2}>
+  <Card
+    title="Postman Collection"
+    icon="download"
+    href="/collections/postman_collection.json"
+  >
+    Formato Postman Collection **v2.1** com os 3 endpoints da API, exemplos de request/response e script automático de token.
+  </Card>
+  <Card
+    title="Environment — Sandbox"
+    icon="download"
+    href="/collections/postman_environment_sandbox.json"
+  >
+    Variáveis pré-configuradas para o ambiente **Sandbox** (`baseUrl`, `clientId`, `clientSecret`, `token`).
+  </Card>
+</CardGroup>
+
+---
+
+## Como importar e usar
+
+<Steps>
+  <Step title="Importe a Collection no Postman">
+    1. Abra o Postman e clique em **Import** (canto superior esquerdo).
+    2. Arraste o arquivo `postman_collection.json` ou clique em **Upload Files** e selecione-o.
+    3. A collection **API Conta Simples** aparecerá na barra lateral com 3 pastas: *Autenticação*, *Cartões & Transações* e *Anexos*.
+  </Step>
+
+  <Step title="Importe o Environment">
+    1. No Postman, clique no ícone de engrenagem ⚙️ (canto superior direito) → **Import**.
+    2. Selecione o arquivo `postman_environment_sandbox.json`.
+    3. O environment **Conta Simples — Sandbox** ficará disponível no seletor de environments.
+  </Step>
+
+  <Step title="Selecione o Environment">
+    No canto superior direito do Postman, abra o seletor de environments e escolha **Conta Simples — Sandbox**.
+
+    Isso garante que todas as variáveis (`baseUrl`, `clientId`, `clientSecret`, `token`) sejam aplicadas automaticamente nos requests.
+  </Step>
+
+  <Step title="Preencha suas credenciais">
+    1. Clique no environment **Conta Simples — Sandbox** para editá-lo.
+    2. Preencha os valores de:
+       - `clientId` — sua **API Key**
+       - `clientSecret` — seu **API Secret**
+    3. Salve o environment.
+
+    <Tip>
+    As credenciais são obtidas no [Internet Banking da Conta Simples](https://ib.contasimples.com/integracoes/api/credenciais). Consulte o guia de [Autenticação](/comece-aqui/autenticacao) para mais detalhes.
+    </Tip>
+  </Step>
+
+  <Step title="Gere o token de acesso">
+    1. Na collection, abra a pasta **Autenticação** e clique em **Obter Token de Acesso**.
+    2. Clique em **Send**.
+    3. Se as credenciais estiverem corretas, o token será salvo automaticamente na variável `{{token}}` (via script de test da collection).
+    4. Agora todos os outros requests usarão esse token no header `Authorization: Bearer {{token}}`.
+
+    <Warning>
+    O token expira em **1 hora**. Execute este request novamente quando o token expirar.
+    </Warning>
+  </Step>
+
+  <Step title="Teste os endpoints">
+    Com o token ativo, abra qualquer request da collection e clique em **Send**:
+
+    - **Extrato de Cartão** — ajuste `startDate`, `endDate` e `limit` no body.
+    - **Download de Anexo** — preencha o `attachmentId` obtido na resposta do extrato.
+  </Step>
+</Steps>
+
+---
+
+## Compatibilidade
+
+A collection usa o formato **Postman Collection v2.1**, que é compatível com:
+
+| Ferramenta | Importação |
+|------------|-----------|
+| **Postman** | Nativa — importe diretamente via **Import** |
+| **Insomnia** | Suporta importação de Postman Collection v2.x via **Import/Export** |
+| **Bruno** | Suporta importação de Postman Collection via menu **Collection → Import** |
+| **Thunder Client** (VS Code) | Suporta importação de Postman Collection v2.1 |
+
+---
+
+## Conteúdo da collection
+
+A collection contém **3 endpoints** organizados em pastas:
+
+| Pasta | Endpoint | Método |
+|-------|----------|--------|
+| Autenticação | `/oauth/token` | `POST` |
+| Cartões & Transações | `/credit-card` | `POST` |
+| Anexos | `/content/{attachmentId}` | `GET` |
+
+### Variáveis utilizadas
+
+| Variável | Descrição | Valor padrão (Sandbox) |
+|----------|-----------|----------------------|
+| `{{baseUrl}}` | URL base da API | `https://api-sandbox.contasimples.com` |
+| `{{clientId}}` | API Key | *(vazio — preencha com sua credencial)* |
+| `{{clientSecret}}` | API Secret | *(vazio — preencha com sua credencial)* |
+| `{{token}}` | Token JWT | *(preenchido automaticamente pelo script)* |
+
+<Info>
+Para mais detalhes sobre os endpoints, consulte a [API Reference](/api-reference/introducao).
+</Info>
