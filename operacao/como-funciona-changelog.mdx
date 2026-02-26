@@ -70,38 +70,6 @@ Para mudanças incompatíveis, seguimos este processo:
 
 ---
 
-## Modelo de entrada
-
-Use este modelo para documentar novas releases:
-
-```markdown
-### [X.Y.Z] - YYYY-MM-DD
-
-#### Added
-- Novo endpoint POST /recurso para criar recursos
-- Suporte a filtro por data em GET /transacoes
-
-#### Changed
-- Campo `status` agora aceita valor "pending_review"
-- Rate limit aumentado de 100 para 200 req/min
-
-#### Deprecated
-- Parâmetro `legacy_field` será removido na versão 2.0
-- Endpoint GET /v1/old-endpoint use GET /v2/new-endpoint
-
-#### Removed
-- Removido suporte a autenticação Basic Auth
-
-#### Fixed
-- Correção no cálculo de paginação quando total_items = 0
-- Timezone correto em campos de data
-
-#### Security
-- Atualização de dependências com vulnerabilidades conhecidas
-```
-
----
-
 ## Feedback
 
 Tem sugestões para a API ou documentação?
