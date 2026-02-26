@@ -39,11 +39,11 @@ Este guia apresenta o caminho recomendado para integrar com a API Conta Simples,
     Com as credenciais em mãos, autentique-se via **OAuth 2.0 Client Credentials** para obter um `access_token`.
 
     ```bash
-    curl -X POST https://api-sandbox.contasimples.com/oauth/token \
-      -H "Content-Type: application/x-www-form-urlencoded" \
-      -d "grant_type=client_credentials" \
-      -d "client_id={SUA_API_KEY}" \
-      -d "client_secret={SEU_API_SECRET}"
+    # BASIC_BASE64 = "SUA_API_KEY:SEU_API_SECRET" encodado em base64
+    curl --location 'https://api-sandbox.contasimples.com/oauth/v1/access-token' \
+      --header "Authorization: Basic ${BASIC_BASE64}" \
+      --header "Content-Type: application/x-www-form-urlencoded" \
+      --data "grant_type=client_credentials"
     ```
 
     O token retornado tem validade de **1 hora**. Implemente renovação automática.
@@ -166,7 +166,7 @@ graph LR
 
 | Etapa | Endpoint | Referência |
 |-------|----------|------------|
-| Autenticação | `POST /oauth/token` | [Autenticação](/comece-aqui/autenticacao) |
+| Autenticação | `POST /oauth/v1/access-token` | [Autenticação](/comece-aqui/autenticacao) |
 | Transações | `POST /credit-card` | [API Reference](/api-reference/extrato-cartao) |
 | Anexos | `GET /content/{attachmentId}` | [API Reference](/api-reference/download-anexo) |
 

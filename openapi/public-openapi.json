@@ -30,15 +30,15 @@
     }
   ],
   "paths": {
-    "/oauth/token": {
+    "/oauth/v1/access-token": {
       "post": {
         "tags": ["Autenticação"],
         "summary": "Obter Token de Acesso",
-        "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials. Use a **API Key** como `client_id` e o **API Secret** como `client_secret`.\n\nAs credenciais são gerenciadas pelo [Internet Banking da Conta Simples](https://ib.contasimples.com/integracoes/api/credenciais).\n\n**Importante:**\n- O token expira em **1 hora** (`expires_in: 3600`).\n- Renove o token **antes** da expiração para evitar interrupções.\n- Use `Content-Type: application/x-www-form-urlencoded` (não JSON).",
+        "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials. As credenciais **api_key** e **api_secret** devem ser enviadas no header `Authorization: Basic`, com o valor em base64 da string `api_key:api_secret`.\n\nAs credenciais são gerenciadas pelo [Internet Banking da Conta Simples](https://ib.contasimples.com/integracoes/api/credenciais).\n\n**Importante:**\n- O token expira em **1 hora** (`expires_in: 3600`).\n- Renove o token **antes** da expiração para evitar interrupções.\n- Use `Content-Type: application/x-www-form-urlencoded` no body (apenas `grant_type=client_credentials`).",
         "operationId": "getAccessToken",
-        "security": [],
+        "security": [{"basicAuth": []}],
         "requestBody": {
-          "description": "Credenciais OAuth 2.0 Client Credentials.",
+          "description": "Body com o tipo de concessão OAuth 2.0. Credenciais vão no header Authorization: Basic (base64 de api_key:api_secret).",
           "required": true,
           "content": {
             "application/x-www-form-urlencoded": {
@@ -179,28 +179,14 @@
     "schemas": {
       "OAuthTokenRequest": {
         "type": "object",
-        "description": "Parâmetros para obtenção de token via OAuth 2.0 Client Credentials.",
-        "required": [
-          "grant_type",
-          "client_id",
-          "client_secret"
-        ],
+        "description": "Body da requisição de token. Credenciais (api_key e api_secret) são enviadas no header Authorization: Basic (base64 de api_key:api_secret).",
+        "required": ["grant_type"],
         "properties": {
           "grant_type": {
             "type": "string",
             "enum": ["client_credentials"],
             "description": "Tipo de concessão OAuth 2.0. Sempre `client_credentials`.",
             "example": "client_credentials"
-          },
-          "client_id": {
-            "type": "string",
-            "description": "API Key obtida no Internet Banking da Conta Simples.",
-            "example": "sua-api-key"
-          },
-          "client_secret": {
-            "type": "string",
-            "description": "API Secret obtido no Internet Banking da Conta Simples.",
-            "example": "seu-api-secret"
           }
         }
       },
@@ -531,6 +517,11 @@
       }
     },
     "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "API Key e API Secret no formato api_key:api_secret, encodados em base64. Header: Authorization: Basic {base64(api_key:api_secret)}"
+      },
       "bearer": {
         "type": "http",
         "scheme": "bearer",

@@ -53,11 +53,11 @@ Credenciais comprometidas devem ser revogadas imediatamente pelo painel do Inter
 Com suas credenciais em mãos, autentique-se para obter um token de acesso.
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/oauth/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials" \
-  -d "client_id={SUA_API_KEY}" \
-  -d "client_secret={SEU_API_SECRET}"
+# BASIC_BASE64 = "SUA_API_KEY:SEU_API_SECRET" encodado em base64
+curl --location 'https://api-sandbox.contasimples.com/oauth/v1/access-token' \
+  --header "Authorization: Basic ${BASIC_BASE64}" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data "grant_type=client_credentials"
 ```
 
 ### Onde substituir
@@ -244,7 +244,7 @@ Se sua primeira chamada falhar, verifique:
     - O token não expirou (`expires_in` segundos)
     - Você está usando o token correto (não o `API Secret`)
     
-    **Solução:** Obtenha um novo token via `/oauth/token`.
+    **Solução:** Obtenha um novo token via `/oauth/v1/access-token`.
   </Accordion>
   
   <Accordion title="400 Bad Request" icon="circle-xmark">

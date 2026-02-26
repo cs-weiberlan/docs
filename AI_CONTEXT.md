@@ -52,7 +52,7 @@ docs/
 │
 ├── api-reference/                     # Tab: API Reference
 │   ├── introducao.mdx                 #   Landing page da API Reference
-│   ├── autenticacao.mdx               #   POST /oauth/token (gerado do OpenAPI)
+│   ├── autenticacao.mdx               #   POST /oauth/v1/access-token (gerado do OpenAPI)
 │   ├── extrato-cartao.mdx             #   POST /credit-card (gerado do OpenAPI)
 │   └── download-anexo.mdx             #   GET /content/{attachmentId} (gerado do OpenAPI)
 │
@@ -106,10 +106,11 @@ Referência      │  Anexos                │
 
 A API tem **3 endpoints** (definidos no OpenAPI spec):
 
-### POST /oauth/token
+### POST /oauth/v1/access-token
 - Obtém token de acesso (JWT) via OAuth 2.0 Client Credentials
+- Header: `Authorization: Basic {base64(api_key:api_secret)}`
 - Content-Type: `application/x-www-form-urlencoded`
-- Body: `grant_type=client_credentials&client_id={API_KEY}&client_secret={API_SECRET}`
+- Body: `grant_type=client_credentials`
 - Retorna: `{ access_token, token_type: "Bearer", expires_in: 3600 }`
 - Token válido por 1 hora
 - Credenciais (API Key + API Secret) gerenciadas via Internet Banking: https://ib.contasimples.com/integracoes/api/credenciais

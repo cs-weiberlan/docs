@@ -13,13 +13,13 @@
       "description": "URL base da API. Sandbox: https://api-sandbox.contasimples.com | Produção: https://api.contasimples.com"
     },
     {
-      "key": "clientId",
+      "key": "apiKey",
       "value": "",
       "type": "string",
       "description": "API Key obtida no Internet Banking da Conta Simples (https://ib.contasimples.com/integracoes/api/credenciais)."
     },
     {
-      "key": "clientSecret",
+      "key": "apiSecret",
       "value": "",
       "type": "string",
       "description": "API Secret obtido no Internet Banking da Conta Simples."
@@ -28,7 +28,7 @@
       "key": "token",
       "value": "",
       "type": "string",
-      "description": "Token JWT obtido via POST /oauth/token. Preenchido automaticamente pelo script de autenticação."
+      "description": "Token JWT obtido via POST /oauth/v1/access-token. Preenchido automaticamente pelo script de autenticação."
     }
   ],
   "item": [
@@ -39,6 +39,21 @@
         {
           "name": "Obter Token de Acesso",
           "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{apiKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{apiSecret}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -54,32 +69,27 @@
                   "value": "client_credentials",
                   "description": "Tipo de concessão OAuth 2.0. Sempre client_credentials.",
                   "type": "text"
-                },
-                {
-                  "key": "client_id",
-                  "value": "{{clientId}}",
-                  "description": "API Key obtida no Internet Banking da Conta Simples.",
-                  "type": "text"
-                },
-                {
-                  "key": "client_secret",
-                  "value": "{{clientSecret}}",
-                  "description": "API Secret obtido no Internet Banking da Conta Simples.",
-                  "type": "text"
                 }
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/oauth/token",
+              "raw": "{{baseUrl}}/oauth/v1/access-token",
               "host": ["{{baseUrl}}"],
-              "path": ["oauth", "token"]
+              "path": ["oauth", "v1", "access-token"]
             },
-            "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials.\n\nUse a API Key como client_id e o API Secret como client_secret.\n\nO token expira em 1 hora (expires_in: 3600). Renove antes da expiração para evitar interrupções."
+            "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials.\n\nCredenciais api_key e api_secret são enviadas no header Authorization: Basic (base64 de api_key:api_secret). No Postman, use Basic Auth com apiKey e apiSecret.\n\nO token expira em 1 hora (expires_in: 3600). Renove antes da expiração para evitar interrupções."
           },
           "response": [
             {
               "name": "200 — Token gerado com sucesso",
               "originalRequest": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {"key": "username", "value": "{{apiKey}}", "type": "string"},
+                    {"key": "password", "value": "{{apiSecret}}", "type": "string"}
+                  ]
+                },
                 "method": "POST",
                 "header": [
                   {
@@ -94,23 +104,13 @@
                       "key": "grant_type",
                       "value": "client_credentials",
                       "type": "text"
-                    },
-                    {
-                      "key": "client_id",
-                      "value": "{{clientId}}",
-                      "type": "text"
-                    },
-                    {
-                      "key": "client_secret",
-                      "value": "{{clientSecret}}",
-                      "type": "text"
                     }
                   ]
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/oauth/token",
+                  "raw": "{{baseUrl}}/oauth/v1/access-token",
                   "host": ["{{baseUrl}}"],
-                  "path": ["oauth", "token"]
+                  "path": ["oauth", "v1", "access-token"]
                 }
               },
               "status": "OK",

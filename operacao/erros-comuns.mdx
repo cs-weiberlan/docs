@@ -137,7 +137,7 @@ O endpoint de download de anexos pode retornar:
     **Causa:** O access token excedeu seu tempo de vida (normalmente 1 hora).
     
     **Solução:**
-    1. Obtenha um novo token via `/oauth/token`
+    1. Obtenha um novo token via `/oauth/v1/access-token`
     2. Implemente renovação automática antes da expiração
     
     ```typescript

@@ -13,7 +13,7 @@ sequenceDiagram
     participant Auth as Endpoint de Auth
     participant API as API Conta Simples
     
-    Client->>Auth: POST /oauth/token (API Key + API Secret)
+    Client->>Auth: POST /oauth/v1/access-token (Authorization: Basic base64(api_key:api_secret))
     Auth-->>Client: access_token (JWT)
     Client->>API: GET /recurso + Bearer token
     API-->>Client: Resposta 200
@@ -25,14 +25,14 @@ sequenceDiagram
 
 ### Requisição
 
-Faça uma requisição `POST` para o endpoint de token com suas credenciais (API Key e API Secret obtidas no [Internet Banking](https://ib.contasimples.com/integracoes/api/credenciais)):
+Faça uma requisição `POST` para o endpoint de token. As credenciais (API Key e API Secret obtidas no [Internet Banking](https://ib.contasimples.com/integracoes/api/credenciais)) devem ser enviadas no header `Authorization` em formato **Basic**: encode em base64 a string `API_KEY:API_SECRET` e use como valor do header.
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/oauth/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials" \
-  -d "client_id={SUA_API_KEY}" \
-  -d "client_secret={SEU_API_SECRET}"
+# BASIC_BASE64 = "SUA_API_KEY:SEU_API_SECRET" encodado em base64
+curl --location 'https://api-sandbox.contasimples.com/oauth/v1/access-token' \
+  --header "Authorization: Basic ${BASIC_BASE64}" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data "grant_type=client_credentials"
 ```
 
 <Note>
@@ -174,13 +174,13 @@ Se suas credenciais forem comprometidas:
     
     **Solução:** Verifique os escopos das suas credenciais com o time de suporte.
   </Accordion>
-  <Accordion title="400 Bad Request no /oauth/token" icon="circle-xmark">
+  <Accordion title="400 Bad Request no /oauth/v1/access-token" icon="circle-xmark">
     **Causas comuns:**
     - `grant_type` incorreto
-    - API Key ou API Secret inválidos
-    - Content-Type incorreto
+    - API Key ou API Secret inválidos no header `Authorization: Basic`
+    - Valor em base64 malformado (deve ser `API_KEY:API_SECRET` encodado)
     
-    **Solução:** Verifique se está usando `application/x-www-form-urlencoded` e credenciais corretas.
+    **Solução:** Verifique o header `Authorization: Basic` e se o base64 está correto.
   </Accordion>
 </AccordionGroup>
 
