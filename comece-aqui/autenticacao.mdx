@@ -39,10 +39,6 @@ curl -X POST https://api-sandbox.contasimples.com/oauth/token \
 Para produção, substitua a URL base por `https://api.contasimples.com`.
 </Note>
 
-<Info>
-**TODO:** Confirmar URL exata do endpoint de autenticação.
-</Info>
-
 ### Resposta
 
 ```json
@@ -124,30 +120,6 @@ Toda requisição autenticada deve incluir:
 |--------|-------|-----------|
 | `Authorization` | `Bearer {TOKEN}` | Token de acesso OAuth 2.0 |
 | `Content-Type` | `application/json` | Formato do corpo da requisição |
-
-<Info>
-**TODO:** Adicionar headers específicos (X-Request-Id, X-Idempotency-Key, etc.) quando Swagger/OpenAPI estiver disponível.
-</Info>
-
----
-
-## Escopos e permissões
-
-O sistema de escopos controla quais recursos sua aplicação pode acessar.
-
-<Note>
-**TODO:** Listar escopos disponíveis (cards:read, cards:write, transactions:read, etc.) quando documentação de escopos estiver disponível.
-</Note>
-
-### Conceito de escopos
-
-| Padrão | Descrição |
-|--------|-----------|
-| `recurso:read` | Permissão de leitura no recurso |
-| `recurso:write` | Permissão de escrita (inclui leitura) |
-| `recurso:*` | Todas as permissões no recurso |
-
-Se sua aplicação tentar acessar um recurso sem o escopo necessário, receberá `403 Forbidden`.
 
 ---
 

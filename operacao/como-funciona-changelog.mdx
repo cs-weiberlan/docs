@@ -1,0 +1,111 @@
+---
+title: "Convenções do Changelog"
+sidebarTitle: "Convenções"
+description: "Convenções, versionamento e política de breaking changes da API Conta Simples"
+---
+
+## Sobre o changelog
+
+O changelog documenta todas as mudanças significativas na API Conta Simples, incluindo novas funcionalidades, alterações e correções. Seguimos o padrão [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## Convenções
+
+Cada release é documentada com os seguintes tipos de mudança:
+
+| Tipo | Descrição |
+|------|-----------|
+| **Added** | Novas funcionalidades |
+| **Changed** | Mudanças em funcionalidades existentes |
+| **Deprecated** | Funcionalidades que serão removidas em versões futuras |
+| **Removed** | Funcionalidades removidas |
+| **Fixed** | Correções de bugs |
+| **Security** | Correções de vulnerabilidades |
+
+---
+
+## Versionamento
+
+A API segue [Semantic Versioning](https://semver.org/):
+
+- **MAJOR**: Mudanças incompatíveis (breaking changes)
+- **MINOR**: Novas funcionalidades compatíveis
+- **PATCH**: Correções compatíveis
+
+<Note>
+Breaking changes são comunicados com **mínimo de 90 dias** de antecedência e documentados no changelog.
+</Note>
+
+---
+
+## Notificações de mudanças
+
+### Como ser notificado
+
+<CardGroup cols={2}>
+  <Card title="E-mail" icon="envelope">
+    Parceiros cadastrados recebem notificações de mudanças por e-mail.
+  </Card>
+</CardGroup>
+
+### Breaking changes
+
+Para mudanças incompatíveis, seguimos este processo:
+
+<Steps>
+  <Step title="Anúncio (D-90)">
+    Comunicação via e-mail e entrada no changelog com label **Deprecated**.
+  </Step>
+  <Step title="Documentação (D-60)">
+    Guia de migração disponibilizado com exemplos de código.
+  </Step>
+  <Step title="Lembrete (D-30)">
+    Novo comunicado reforçando a mudança.
+  </Step>
+  <Step title="Implementação (D-0)">
+    Mudança entra em vigor. Endpoint/feature antigo deixa de funcionar.
+  </Step>
+</Steps>
+
+---
+
+## Modelo de entrada
+
+Use este modelo para documentar novas releases:
+
+```markdown
+### [X.Y.Z] - YYYY-MM-DD
+
+#### Added
+- Novo endpoint POST /recurso para criar recursos
+- Suporte a filtro por data em GET /transacoes
+
+#### Changed
+- Campo `status` agora aceita valor "pending_review"
+- Rate limit aumentado de 100 para 200 req/min
+
+#### Deprecated
+- Parâmetro `legacy_field` será removido na versão 2.0
+- Endpoint GET /v1/old-endpoint use GET /v2/new-endpoint
+
+#### Removed
+- Removido suporte a autenticação Basic Auth
+
+#### Fixed
+- Correção no cálculo de paginação quando total_items = 0
+- Timezone correto em campos de data
+
+#### Security
+- Atualização de dependências com vulnerabilidades conhecidas
+```
+
+---
+
+## Feedback
+
+Tem sugestões para a API ou documentação?
+
+<Card title="Suporte & Contato" icon="message" href="/operacao/suporte">
+  Envie seu feedback através dos canais de suporte.
+</Card>

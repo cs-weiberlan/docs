@@ -78,7 +78,10 @@
         "groups": [
           {
             "group": "Changelog",
-            "pages": ["operacao/changelog"]
+            "pages": [
+              "operacao/changelog",
+              "operacao/como-funciona-changelog"
+            ]
           }
         ]
       }
