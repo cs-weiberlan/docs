@@ -67,10 +67,10 @@ Este guia apresenta o caminho recomendado para integrar com a API Conta Simples,
   </Step>
 
   <Step title="Consultar transações de cartão">
-    Faça sua primeira consulta ao extrato de transações usando o endpoint `POST /credit-card`. A resposta contém transações do período, incluindo dados do cartão, categoria, centro de custo e anexos.
+    Faça sua primeira consulta ao extrato de transações usando o endpoint `POST /statements/v1/credit-card`. A resposta contém transações do período, incluindo dados do cartão, categoria, centro de custo e anexos.
 
     ```bash
-    curl -X POST https://api-sandbox.contasimples.com/credit-card \
+    curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
       -H "Authorization: Bearer {TOKEN}" \
       -H "Content-Type: application/json" \
       -d '{
@@ -81,7 +81,7 @@ Este guia apresenta o caminho recomendado para integrar com a API Conta Simples,
     ```
 
     <CardGroup cols={2}>
-      <Card title="Endpoint: POST /credit-card" icon="code" href="/api-reference/extrato-cartao">
+      <Card title="Endpoint: POST /statements/v1/credit-card" icon="code" href="/api-reference/extrato-cartao">
         Referência técnica completa com parâmetros e schemas.
       </Card>
       <Card title="Dicionário de Dados" icon="book" href="/referencia/dicionario-dados">
@@ -104,19 +104,19 @@ Este guia apresenta o caminho recomendado para integrar com a API Conta Simples,
   </Step>
 
   <Step title="Consumir anexos">
-    Transações podem incluir comprovantes (notas fiscais, recibos). Baixe-os via `GET /content/{attachmentId}`.
+    Transações podem incluir comprovantes (notas fiscais, recibos). Baixe-os via `GET /attachments/v1/content/{attachmentId}`.
 
     **Fluxo:**
     1. Consulte transações e verifique o array `attachments`
     2. Para cada anexo, extraia o `id`
-    3. Faça `GET /content/{id}` para baixar o arquivo binário
+    3. Faça `GET /attachments/v1/content/{id}` para baixar o arquivo binário
     4. Use o header `Content-Type` da resposta para determinar o formato (PNG, JPEG, PDF)
 
     <CardGroup cols={2}>
       <Card title="Boas Práticas → Anexos" icon="shield-check" href="/guias/boas-praticas#download-de-anexos">
         Exemplo de download e processamento.
       </Card>
-      <Card title="Endpoint: GET /content/{id}" icon="code" href="/api-reference/download-anexo">
+      <Card title="Endpoint: GET /attachments/v1/content/{id}" icon="code" href="/api-reference/download-anexo">
         Referência técnica do endpoint.
       </Card>
     </CardGroup>
@@ -167,8 +167,8 @@ graph LR
 | Etapa | Endpoint | Referência |
 |-------|----------|------------|
 | Autenticação | `POST /oauth/v1/access-token` | [Autenticação](/comece-aqui/autenticacao) |
-| Transações | `POST /credit-card` | [API Reference](/api-reference/extrato-cartao) |
-| Anexos | `GET /content/{attachmentId}` | [API Reference](/api-reference/download-anexo) |
+| Transações | `POST /statements/v1/credit-card` | [API Reference](/api-reference/extrato-cartao) |
+| Anexos | `GET /attachments/v1/content/{attachmentId}` | [API Reference](/api-reference/download-anexo) |
 
 ---
 

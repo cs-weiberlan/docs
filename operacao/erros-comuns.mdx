@@ -16,7 +16,7 @@ Antes de contatar o suporte, use o [Checklist de diagnóstico](#checklist-de-dia
 
 ## Erros da API por endpoint
 
-### POST /credit-card
+### POST /statements/v1/credit-card
 
 O endpoint de extrato de transações pode retornar:
 
@@ -26,7 +26,7 @@ O endpoint de extrato de transações pode retornar:
 | `400` | Bad Request | Parâmetros inválidos |
 | `500` | Internal Server Error | Erro interno |
 
-### GET /content/{attachmentId}
+### GET /attachments/v1/content/{attachmentId}
 
 O endpoint de download de anexos pode retornar:
 
@@ -44,7 +44,7 @@ O endpoint de download de anexos pode retornar:
 - `400 Bad Request`
 - Parâmetros inválidos no body da requisição
 
-### Causas específicas para POST /credit-card
+### Causas específicas para POST /statements/v1/credit-card
 
 <AccordionGroup>
   <Accordion title="Formato de data inválido" icon="calendar">
@@ -152,7 +152,7 @@ O endpoint de download de anexos pode retornar:
     
     **Solução:** Verifique se está incluindo o header em todas as requisições:
     ```bash
-    curl -X POST https://api-sandbox.contasimples.com/credit-card \
+    curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
       -H "Authorization: Bearer {TOKEN}" \
       -H "Content-Type: application/json"
     ```
@@ -244,7 +244,7 @@ async function requestWithAuthRetry(
 - `404 Not Found`
 - Recurso não encontrado
 
-### Causas específicas para GET /content/{attachmentId}
+### Causas específicas para GET /attachments/v1/content/{attachmentId}
 
 <AccordionGroup>
   <Accordion title="ID de anexo inexistente" icon="magnifying-glass">
@@ -260,13 +260,13 @@ async function requestWithAuthRetry(
     
     **Incorreto:**
     ```
-    GET /content/
+    GET /attachments/v1/content/
     GET /attachment/att_abc123
     ```
     
     **Correto:**
     ```
-    GET /content/att_abc123
+    GET /attachments/v1/content/att_abc123
     ```
   </Accordion>
 </AccordionGroup>
@@ -364,7 +364,7 @@ Ao contatar o [suporte](/operacao/suporte), sempre inclua:
 |------------|-----------|---------|
 | **Timestamp** | Data/hora exata (UTC) | `2025-01-15T14:30:00Z` |
 | **Ambiente** | Sandbox ou Produção | `Sandbox` |
-| **Endpoint** | URL e método | `POST /credit-card` |
+| **Endpoint** | URL e método | `POST /statements/v1/credit-card` |
 | **Status code** | Código HTTP retornado | `400` |
 | **Request body** | Payload enviado (mascarado) | Ver abaixo |
 | **Response body** | Resposta da API | Ver abaixo |
@@ -401,10 +401,10 @@ Ao contatar o [suporte](/operacao/suporte), sempre inclua:
   <Card title="Autenticação" icon="key" href="/comece-aqui/autenticacao">
     Problemas com token ou credenciais.
   </Card>
-  <Card title="Endpoint: POST /credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
+  <Card title="Endpoint: POST /statements/v1/credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
     Referência técnica do endpoint de extrato.
   </Card>
-  <Card title="Endpoint: GET /content/{id}" icon="paperclip" href="/api-reference/download-anexo">
+  <Card title="Endpoint: GET /attachments/v1/content/{id}" icon="paperclip" href="/api-reference/download-anexo">
     Referência técnica do endpoint de anexos.
   </Card>
 </CardGroup>

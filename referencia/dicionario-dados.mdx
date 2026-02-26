@@ -163,14 +163,14 @@ Representa um arquivo anexado a uma transação (comprovante, nota fiscal, etc.)
   "name": "comprovante.pdf",
   "_links": {
     "content": {
-      "href": "/content/att_001",
+      "href": "/attachments/v1/content/att_001",
       "rel": "GET"
     }
   }
 }
 ```
 
-Para baixar o conteúdo do anexo, use o endpoint [GET /content/{attachmentId}](/api-reference/download-anexo).
+Para baixar o conteúdo do anexo, use o endpoint [GET /attachments/v1/content/{attachmentId}](/api-reference/download-anexo).
 
 ---
 
@@ -320,7 +320,7 @@ Resposta da consulta de extrato com lista de transações.
 ### Anexos e links
 
 - Anexos são retornados com links HATEOAS no campo `_links`
-- Use o endpoint `GET /content/{attachmentId}` para baixar o conteúdo
+- Use o endpoint `GET /attachments/v1/content/{attachmentId}` para baixar o conteúdo
 - Formatos suportados: `image/png`, `image/jpeg`, `application/pdf`
 
 ---
@@ -334,10 +334,10 @@ Resposta da consulta de extrato com lista de transações.
   <Card title="Fluxo de Integração" icon="route" href="/guias/fluxo-integracao">
     Passo a passo do Sandbox à Produção.
   </Card>
-  <Card title="Endpoint: POST /credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
+  <Card title="Endpoint: POST /statements/v1/credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
     Referência técnica do endpoint de extrato.
   </Card>
-  <Card title="Endpoint: GET /content/{id}" icon="paperclip" href="/api-reference/download-anexo">
+  <Card title="Endpoint: GET /attachments/v1/content/{id}" icon="paperclip" href="/api-reference/download-anexo">
     Referência técnica do endpoint de anexos.
   </Card>
 </CardGroup>

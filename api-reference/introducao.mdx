@@ -44,10 +44,10 @@ A **API Reference** é a referência técnica dos endpoints da API Conta Simples
   <Card title="POST /oauth/v1/access-token" icon="key" href="/api-reference/autenticacao">
     Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials para autenticar nas chamadas à API.
   </Card>
-  <Card title="POST /credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
+  <Card title="POST /statements/v1/credit-card" icon="credit-card" href="/api-reference/extrato-cartao">
     Consulta extrato de transações de cartão por período. Retorna transações com dados de cartão, categoria, centro de custo e anexos.
   </Card>
-  <Card title="GET /content/{attachmentId}" icon="paperclip" href="/api-reference/download-anexo">
+  <Card title="GET /attachments/v1/content/{attachmentId}" icon="paperclip" href="/api-reference/download-anexo">
     Download do conteúdo binário de um anexo (comprovante, nota fiscal, recibo) em PNG, JPEG ou PDF.
   </Card>
 </CardGroup>
@@ -59,7 +59,7 @@ A **API Reference** é a referência técnica dos endpoints da API Conta Simples
 Todas as requisições requerem autenticação via **Bearer token** no header `Authorization`:
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/credit-card \
+curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
   -H "Authorization: Bearer {TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{...}'

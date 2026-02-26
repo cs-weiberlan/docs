@@ -53,8 +53,8 @@ docs/
 ├── api-reference/                     # Tab: API Reference
 │   ├── introducao.mdx                 #   Landing page da API Reference
 │   ├── autenticacao.mdx               #   POST /oauth/v1/access-token (gerado do OpenAPI)
-│   ├── extrato-cartao.mdx             #   POST /credit-card (gerado do OpenAPI)
-│   └── download-anexo.mdx             #   GET /content/{attachmentId} (gerado do OpenAPI)
+│   ├── extrato-cartao.mdx             #   POST /statements/v1/credit-card (gerado do OpenAPI)
+   │   └── download-anexo.mdx             #   GET /attachments/v1/content/{attachmentId} (gerado do OpenAPI)
 │
 ├── operacao/                          # Páginas operacionais
 │   ├── erros-comuns.mdx               #   Diagnóstico de erros por código HTTP
@@ -117,7 +117,7 @@ A API tem **3 endpoints** (definidos no OpenAPI spec):
 - Acesso às credenciais depende do perfil de usuário/permissões no IB
 - Não requer autenticação (é o endpoint que gera o token)
 
-### POST /credit-card
+### POST /statements/v1/credit-card
 - Consulta extrato de transações de cartão por período
 - Body: `{ startDate, endDate, limit, nextPageStartKey? }`
 - Período máximo: 62 dias
@@ -126,7 +126,7 @@ A API tem **3 endpoints** (definidos no OpenAPI spec):
 - Paginação baseada em cursor (`nextPageStartKey`)
 - Header: `Authorization: Bearer {TOKEN}`
 
-### GET /content/{attachmentId}
+### GET /attachments/v1/content/{attachmentId}
 - Download binário de um anexo (comprovante, nota fiscal)
 - Retorna: arquivo binário (PNG, JPEG ou PDF)
 - O `attachmentId` vem do array `attachments` dentro de cada transação
@@ -161,7 +161,7 @@ A API tem **3 endpoints** (definidos no OpenAPI spec):
 # extrato-cartao.mdx
 ---
 title: "Extrato de Cartão"
-openapi: "POST /credit-card"
+openapi: "POST /statements/v1/credit-card"
 ---
 ```
 O Mintlify gera automaticamente o playground e documentação técnica a partir do spec OpenAPI 3.0.3. O spec precisa ser OpenAPI 3.x para o Mintlify renderizar corretamente (Swagger 2.0 não renderiza).

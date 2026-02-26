@@ -87,10 +87,10 @@ Implemente renovação automática de token antes da expiração para evitar err
 
 ## Passo 3: Consulte o extrato de transações
 
-Agora que você tem um token válido, consulte o extrato de transações de cartão usando [POST /credit-card](/api-reference/extrato-cartao):
+Agora que você tem um token válido, consulte o extrato de transações de cartão usando [POST /statements/v1/credit-card](/api-reference/extrato-cartao):
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/credit-card \
+curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
   -H "Authorization: Bearer {TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -183,7 +183,7 @@ A API usa **paginação baseada em cursor** para lidar com grandes volumes de da
 **Primeira requisição:**
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/credit-card \
+curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
   -H "Authorization: Bearer {TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -205,7 +205,7 @@ curl -X POST https://api-sandbox.contasimples.com/credit-card \
 **Segunda requisição (próxima página):**
 
 ```bash
-curl -X POST https://api-sandbox.contasimples.com/credit-card \
+curl -X POST https://api-sandbox.contasimples.com/statements/v1/credit-card \
   -H "Authorization: Bearer {TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{

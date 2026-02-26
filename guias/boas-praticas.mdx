@@ -54,7 +54,7 @@ async function getAllTransactions(
       payload.nextPageStartKey = nextPageKey;
     }
 
-    const response = await fetch(`${baseUrl}/credit-card`, {
+    const response = await fetch(`${baseUrl}/statements/v1/credit-card`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -235,7 +235,7 @@ function processTransaction(transaction: { id: string; [key: string]: any }) {
 Transações podem incluir comprovantes no array `attachments`. Para baixá-los:
 
 1. Extraia o `id` do anexo na resposta de transações
-2. Faça `GET /content/{attachmentId}` — veja [API Reference](/api-reference/download-anexo)
+2. Faça `GET /attachments/v1/content/{attachmentId}` — veja [API Reference](/api-reference/download-anexo)
 3. Use o header `Content-Type` da resposta para determinar o formato
 
 ### Tipos suportados
@@ -258,7 +258,7 @@ async function downloadAttachment(
   attachmentId: string,
   outputDir = "./downloads"
 ): Promise<string> {
-  const response = await fetch(`${baseUrl}/content/${attachmentId}`, {
+  const response = await fetch(`${baseUrl}/attachments/v1/content/${attachmentId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 

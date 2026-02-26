@@ -177,9 +177,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/credit-card",
+              "raw": "{{baseUrl}}/statements/v1/credit-card",
               "host": ["{{baseUrl}}"],
-              "path": ["credit-card"]
+              "path": ["statements", "v1", "credit-card"]
             },
             "description": "Consulta o extrato de transações de cartão por período.\n\nRegras:\n- O período entre startDate e endDate não pode exceder 62 dias.\n- O limit deve estar entre 5 e 100 itens por página.\n- Use nextPageStartKey para navegar entre páginas (paginação por cursor)."
           },
@@ -204,9 +204,9 @@
                   }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/credit-card",
+                  "raw": "{{baseUrl}}/statements/v1/credit-card",
                   "host": ["{{baseUrl}}"],
-                  "path": ["credit-card"]
+                  "path": ["statements", "v1", "credit-card"]
                 }
               },
               "status": "OK",
@@ -244,9 +244,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/content/:attachmentId",
+              "raw": "{{baseUrl}}/attachments/v1/content/:attachmentId",
               "host": ["{{baseUrl}}"],
-              "path": ["content", ":attachmentId"],
+              "path": ["attachments", "v1", "content", ":attachmentId"],
               "variable": [
                 {
                   "key": "attachmentId",
